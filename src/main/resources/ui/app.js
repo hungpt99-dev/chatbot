@@ -207,11 +207,14 @@ async function showCaseDetail(ref) {
   } catch (_) { /* ignore */ }
 }
 
-function detectMode() {
-  // Best-effort: probe whether an LLM key is configured by checking /api/sops (always 200).
-  // The real mode is backend-driven; we just label "online/offline" heuristically.
-  // The app reports offline when no key is set; we can't read config, so leave neutral.
-  $('mode-pill').textContent = 'ready';
+async function detectMode() {
+  try {
+    const h = await api('GET', '/health');
+    const mode = (h && h.mode) || (h && h.llmConfigured ? 'online' : 'offline');
+    $('mode-pill').textContent = mode === 'online' ? 'LLM online' : 'offline';
+  } catch (_) {
+    $('mode-pill').textContent = 'offline';
+  }
 }
 
 /* ---------------- wiring ---------------- */

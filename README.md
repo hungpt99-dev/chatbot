@@ -8,7 +8,7 @@ corpus — it never invents steps. This is the greenfield `chatbot` repository.
 > **Phase 1B complete** (conversation flow, deterministic execution engine, case tracking, audit, 37 tests green).
 > **Phase 1C complete** (BYOK LLM integration via `LlmPort`, branch-key validation, off-mode fallback, 41 tests green).
 > **Phase 1D complete** (self-contained chat UI served from the same app: employee chat + operator case board, 41 tests green).
-> Phase 1E follows (operator docs, runbook, expanded tests).
+> **Phase 1E complete** (operator runbook, `GET /api/health`, expanded parser + UI tests; **50 tests green**; Phase 1 MVP done).
 
 ## Architecture
 ```
@@ -80,6 +80,7 @@ provider error degrades to the offline interpreter. No key ⇒ fully runnable of
 | POST | `/api/conversations/{id}/messages` | `{message}` or `{stepResult, branchKey}` → advance |
 | GET | `/api/conversations/{id}` | Full thread + current state |
 | GET | `/api/conversations/{id}/audit` | Audit events for the conversation |
+| GET | `/api/health` | Liveness + mode (`{status, llmConfigured, mode}`) |
 | GET | `/api/cases` | Support board (`?status=RESOLVED\|ESCALATED`) |
 | GET | `/api/cases/{reference}` | Case detail |
 
@@ -97,6 +98,8 @@ password-reset · email-cannot-send · vpn-cannot-connect · monitor-not-working
 - `docs/PHASE_1B.md` — conversation, execution engine, case tracking, audit.
 - `docs/PHASE_1C.md` — BYOK LLM integration.
 - `docs/PHASE_1D.md` — chat UI.
+- `docs/PHASE_1E.md` — operator docs, runbook, expanded tests.
+- `docs/OPERATOR.md` — runbook: run, health/mode, config, daily checks, troubleshooting.
 - `docs/adr/` — Architecture Decision Records (ADR-0001 stack, ADR-0005 engine, ADR-0006 LLM).
 
 ## Guardrails (carried into later phases)

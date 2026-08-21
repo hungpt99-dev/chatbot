@@ -38,10 +38,22 @@ public class OpenAiCompatibleLlmPort implements LlmPort {
     private final RestClient client;
     private final ObjectMapper mapper;
 
+    @org.springframework.beans.factory.annotation.Autowired
     public OpenAiCompatibleLlmPort(HelpdeskLlmProperties props, ObjectMapper mapper) {
         this.props = props;
         this.mapper = mapper;
         this.client = RestClient.builder()
+                .baseUrl(props.baseUrl())
+                .defaultHeader("Authorization", "Bearer " + props.apiKey())
+                .defaultHeader("Content-Type", "application/json")
+                .build();
+    }
+
+    /** Constructor that accepts a pre-built {@link RestClient} (used by tests to inject a mock server). */
+    public OpenAiCompatibleLlmPort(HelpdeskLlmProperties props, ObjectMapper mapper, RestClient client) {
+        this.props = props;
+        this.mapper = mapper;
+        this.client = (client != null) ? client : RestClient.builder()
                 .baseUrl(props.baseUrl())
                 .defaultHeader("Authorization", "Bearer " + props.apiKey())
                 .defaultHeader("Content-Type", "application/json")
@@ -105,7 +117,7 @@ public class OpenAiCompatibleLlmPort implements LlmPort {
         return sb.toString();
     }
 
-    private LlmStepDecision parse(String raw) throws JsonProcessingException {
+    LlmStepDecision parse(String raw) throws JsonProcessingException {
         if (raw == null) return null;
         JsonNode root = mapper.readTree(raw);
         JsonNode choices = root.path("choices");
