@@ -7,6 +7,7 @@ import com.helpdesk.domain.model.StepType;
 import com.helpdesk.domain.model.TerminalKind;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -68,5 +69,26 @@ public record SopResponse(
                 sop.getExpectedResult(), sop.getFailureCondition(), sop.getEscalationCondition(),
                 sop.getVersion(), sop.getCreatedAt(), sop.getUpdatedAt(), stepDtos
         );
+    }
+
+    /**
+     * Human-readable rendering of a step: its instruction plus, if present, the
+     * enumerable branch options. This is the text the assistant paraphrases; the
+     * branches are presented so the user (and the interpreting layer) can pick a
+     * valid branch key.
+     */
+    public String responseBody(StepDto step) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(step.instruction());
+        if (step.branches() != null && !step.branches().isEmpty()) {
+            sb.append("\n(");
+            List<String> opts = new ArrayList<>();
+            for (BranchDto b : step.branches()) {
+                opts.add(b.branchKey() + ": " + (b.conditionText() == null ? "" : b.conditionText()));
+            }
+            sb.append(String.join(" | ", opts));
+            sb.append(")");
+        }
+        return sb.toString();
     }
 }
