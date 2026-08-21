@@ -47,11 +47,13 @@ public class SopExecutionEngine {
         // 1) Terminal handling.
         // Guardrails:
         //  - ESCALATE intent is honored at any step (handing off to a human is safe).
-        //  - Reaching a terminal step ends the conversation per that step's kind:
+        //  - A step being ENTERED (or already sat on) that is terminal ends the
+        //    conversation per its kind:
         //      RESOLVE terminal -> RESOLVED (the step itself is the resolution evidence),
         //      ESCALATE terminal -> ESCALATED.
         //  - A RESOLVE intent at a NON-terminal step is ignored (the AI may not claim a
         //    problem fixed without the SOP's resolution step); routing continues normally.
+        //  - If no valid path forward exists, escalate rather than invent a destination.
         if (outcome.isEscalate()) {
             return finish(current, ConversationStatus.ESCALATED, executed);
         }
@@ -64,19 +66,25 @@ public class SopExecutionEngine {
             }
         }
 
-        // 2) Determine the next step key.
+        // 2) Determine the next step key (validated against enumerated branches).
         String nextKey = resolveNextKey(current, outcome);
-        if (nextKey == null) {
+        SopResponse.StepDto next = (nextKey == null) ? null : findStep(sop, nextKey);
+        if (next == null) {
             // No valid path forward — guardrail: escalate rather than invent.
             return finish(current, ConversationStatus.ESCALATED, executed);
         }
 
-        SopResponse.StepDto next = findStep(sop, nextKey);
-        if (next == null) {
-            // Branch/goto pointed at a non-existent step — refuse, escalate.
-            return finish(current, ConversationStatus.ESCALATED, executed);
+        // 3) Entering a terminal step ends the conversation per that step's kind.
+        if (next.terminal()) {
+            if (next.terminalKind() == com.helpdesk.domain.model.TerminalKind.RESOLVE) {
+                return finish(next, ConversationStatus.RESOLVED, executed);
+            }
+            if (next.terminalKind() == com.helpdesk.domain.model.TerminalKind.ESCALATE) {
+                return finish(next, ConversationStatus.ESCALATED, executed);
+            }
         }
 
+        // 4) Otherwise continue to the next step.
         return new EngineResult(next, next.stepKey(), ConversationStatus.IN_PROGRESS.name(),
                 executed, false);
     }

@@ -68,19 +68,19 @@ class LlmIntegrationTest {
         conv = conversationService.sendMessage(conv.id(), new MessageRequest("máy in đang bật", null, null));
         assertEquals("2", conv.currentStepKey());
         conv = conversationService.sendMessage(conv.id(), new MessageRequest("đã kiểm tra, không kẹt giấy", null, null));
-        assertEquals("3", conv.currentStepKey());
-        conv = conversationService.sendMessage(conv.id(), new MessageRequest("in được rồi, xong", null, null));
+        // step 2 -> terminal RESOLVE step 3 closes the conversation.
         assertEquals("RESOLVED", conv.status());
     }
 
     @Test
     void llmDrivesResolutionAtTerminalStep() {
         when(llmPort.isConfigured()).thenReturn(true);
-        // LLM resolves only at the terminal step (step 3); otherwise CONTINUE.
+        // LLM resolves only when the current step is 2 (its defaultNext is the terminal
+        // RESOLVE step 3); otherwise CONTINUE.
         when(llmPort.decide(any(), anyString())).thenAnswer(inv -> {
             var snap = inv.getArgument(0, com.helpdesk.domain.engine.ConversationSnapshot.class);
-            boolean terminal = "3".equals(snap.currentStep().stepKey());
-            return terminal
+            boolean atStep2 = "2".equals(snap.currentStep().stepKey());
+            return atStep2
                     ? new LlmStepDecision("RESOLVE", null, "in được rồi", null, "Tuyệt vời, đã xong")
                     : new LlmStepDecision("CONTINUE", null, null, null, null);
         });
@@ -88,8 +88,7 @@ class LlmIntegrationTest {
         buildSop("llm-resolve-printer");
         ConversationResponse conv = conversationService.create(new ConversationRequest("bob", "máy in không in được"));
         conv = conversationService.sendMessage(conv.id(), new MessageRequest("bật rồi", null, null)); // step 2
-        conv = conversationService.sendMessage(conv.id(), new MessageRequest("đã check", null, null)); // step 3 (terminal)
-        conv = conversationService.sendMessage(conv.id(), new MessageRequest("in được chưa?", null, null)); // LLM -> RESOLVE
+        conv = conversationService.sendMessage(conv.id(), new MessageRequest("in được chưa?", null, null)); // -> terminal 3 -> RESOLVED
         assertEquals("RESOLVED", conv.status());
     }
 
@@ -112,8 +111,8 @@ class LlmIntegrationTest {
         when(llmPort.isConfigured()).thenReturn(true);
         when(llmPort.decide(any(), anyString())).thenAnswer(inv -> {
             var snap = inv.getArgument(0, com.helpdesk.domain.engine.ConversationSnapshot.class);
-            boolean terminal = "3".equals(snap.currentStep().stepKey());
-            return terminal
+            boolean atStep2 = "2".equals(snap.currentStep().stepKey());
+            return atStep2
                     ? new LlmStepDecision("ESCALATE", null, null, "vẫn kẹt giấy sau khi thử", null)
                     : new LlmStepDecision("CONTINUE", null, null, null, null);
         });
@@ -121,8 +120,7 @@ class LlmIntegrationTest {
         buildSop("llm-esc-printer");
         ConversationResponse conv = conversationService.create(new ConversationRequest("dan", "máy in không in được"));
         conv = conversationService.sendMessage(conv.id(), new MessageRequest("bật", null, null)); // step 2
-        conv = conversationService.sendMessage(conv.id(), new MessageRequest("check", null, null)); // step 3 (terminal)
-        conv = conversationService.sendMessage(conv.id(), new MessageRequest("vẫn lỗi", null, null)); // LLM -> ESCALATE
+        conv = conversationService.sendMessage(conv.id(), new MessageRequest("vẫn lỗi", null, null)); // ESCALATE at step 2
         assertEquals("ESCALATED", conv.status());
     }
 }

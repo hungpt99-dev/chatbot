@@ -7,7 +7,8 @@ corpus — it never invents steps. This is the greenfield `chatbot` repository.
 > Status: **Phase 1A complete** (SOP model, CRUD, lexical retrieval, 8 seed SOPs, tests).
 > **Phase 1B complete** (conversation flow, deterministic execution engine, case tracking, audit, 37 tests green).
 > **Phase 1C complete** (BYOK LLM integration via `LlmPort`, branch-key validation, off-mode fallback, 41 tests green).
-> Phases 1D–1E follow (chat UI, packaging/docs).
+> **Phase 1D complete** (self-contained chat UI served from the same app: employee chat + operator case board, 41 tests green).
+> Phase 1E follows (operator docs, runbook, expanded tests).
 
 ## Architecture
 ```
@@ -44,6 +45,22 @@ docker compose up --build
 HELPDESK_LLM_API_KEY=sk-... docker compose up --build
 ```
 
+## UI (Phase 1D)
+A self-contained chat UI is served from the same Spring app — no extra server, no CORS.
+```
+docker compose up --build
+# open http://localhost:8088/   (host 8088 -> container 8080)
+```
+- Left: employee chat — describe the problem, then answer the SOP's step-by-step
+  questions; the assistant advances the SOP and shows the current step. Resolves or
+  escalates with a case created automatically.
+- Right: operator board — live list of cases (filter by status), click for detail
+  (reference, SOP, employee, failed step, escalation reason, timestamps).
+
+Static assets live in `src/main/resources/ui/` (`index.html`, `app.js`, `styles.css`),
+wired by `WebConfig` (`/` and `/ui/**`). The UI only sends `{ "message": "..." }`; the
+deterministic engine remains the sole state authority.
+
 ## LLM integration (Phase 1C)
 The LLM is a drop-in interpreter behind `LlmPort` (`OpenAiCompatibleLlmPort`, OpenAI
 `/chat/completions`). Configure via `helpdesk.llm.*` (`base-url`, `api-key` from
@@ -78,6 +95,8 @@ password-reset · email-cannot-send · vpn-cannot-connect · monitor-not-working
 - `docs/PROPOSAL.md` — full architecture proposal (domain model, state machine, RAG flow, API).
 - `docs/PHASE_1A.md` — what shipped in Phase 1A + decisions.
 - `docs/PHASE_1B.md` — conversation, execution engine, case tracking, audit.
+- `docs/PHASE_1C.md` — BYOK LLM integration.
+- `docs/PHASE_1D.md` — chat UI.
 - `docs/adr/` — Architecture Decision Records (ADR-0001 stack, ADR-0005 engine, ADR-0006 LLM).
 
 ## Guardrails (carried into later phases)

@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>AI SOP Helpdesk</title>
+  <link rel="stylesheet" href="/ui/styles.css"/>
+  <link rel="icon" href="data:,"/>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">AI SOP Helpdesk</div>
+    <div class="brand-sub">Step-by-step IT support, guided by your SOPs</div>
+    <div class="status-pill" id="mode-pill" title="Backend mode">offline</div>
+  </header>
+
+  <main class="layout">
+    <!-- Chat panel -->
+    <section class="chat card">
+      <div class="chat-head">
+        <div id="conv-title">No active conversation</div>
+        <div id="conv-meta" class="meta"></div>
+      </div>
+
+      <div id="start-form" class="start-form">
+        <input id="employee" class="field" placeholder="Your name (e.g. alice)"/>
+        <textarea id="problem" class="field" rows="2" placeholder="Describe the problem (e.g. Máy in không in được)"></textarea>
+        <button id="start-btn" class="btn primary">Start conversation</button>
+        <div id="start-error" class="error"></div>
+      </div>
+
+      <div id="thread" class="thread hidden"></div>
+
+      <form id="msg-form" class="msg-form hidden">
+        <input id="msg-input" class="field grow" placeholder="Type your answer…" autocomplete="off"/>
+        <button class="btn primary" type="submit">Send</button>
+      </form>
+    </section>
+
+    <!-- Operator board -->
+    <aside class="board card">
+      <div class="board-head">
+        <span>Cases</span>
+        <select id="status-filter" class="field small">
+          <option value="">All</option>
+          <option value="RESOLVED">Resolved</option>
+          <option value="ESCALATED">Escalated</option>
+          <option value="IN_PROGRESS">In progress</option>
+          <option value="OPEN">Open</option>
+        </select>
+        <button id="refresh-btn" class="btn ghost" title="Refresh">⟳</button>
+      </div>
+      <ul id="case-list" class="case-list"></ul>
+      <div id="case-detail" class="case-detail hidden"></div>
+    </aside>
+  </main>
+
+  <script src="/ui/app.js"></script>
+</body>
+</html>

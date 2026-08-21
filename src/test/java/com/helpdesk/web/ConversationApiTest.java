@@ -59,14 +59,9 @@ class ConversationApiTest {
 
         Long id = objectMapper.readTree(body).get("id").asLong();
 
-        // Advance to the terminal step (step 2), then resolve there.
-        mockMvc.perform(post("/api/conversations/" + id + "/messages")
-                        .contentType(MediaType.APPLICATION_JSON).content("{\"message\":\"bật rồi\"}"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.currentStepKey").value("2"));
-
+        // One message advances to the terminal RESOLVE step -> RESOLVED.
         String msg = """
-                {"message":"xong rồi","stepResult":{"intent":"TROUBLESHOOT","sopId":"api-printer","currentStep":"2","result":"RESOLVE","resolved":"ok"}}""";
+                {"message":"bật rồi"}""";
         mockMvc.perform(post("/api/conversations/" + id + "/messages").contentType(MediaType.APPLICATION_JSON).content(msg))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("RESOLVED"));
@@ -97,16 +92,12 @@ class ConversationApiTest {
                 .andExpect(status().isCreated()).andReturn().getResponse().getContentAsString();
         Long id = objectMapper.readTree(body).get("id").asLong();
 
-        // Advance to terminal step 2, then resolve (closes), then 409 on next.
-        mockMvc.perform(post("/api/conversations/" + id + "/messages")
-                        .contentType(MediaType.APPLICATION_JSON).content("{\"message\":\"bật rồi\"}"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.currentStepKey").value("2"));
-
+        // One message resolves (closes) the conversation.
         String msg = """
-                {"message":"xong","stepResult":{"intent":"TROUBLESHOOT","sopId":"api-printer","currentStep":"2","result":"RESOLVE"}}""";
+                {"message":"bật rồi"}""";
         mockMvc.perform(post("/api/conversations/" + id + "/messages").contentType(MediaType.APPLICATION_JSON).content(msg))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("RESOLVED"));
 
         mockMvc.perform(post("/api/conversations/" + id + "/messages")
                         .contentType(MediaType.APPLICATION_JSON).content("{\"message\":\"again\"}"))

@@ -76,18 +76,12 @@ class ConversationFlowTest {
                 new MessageRequest("máy in đang bật", "on", null));
         assertEquals("2", after1.currentStepKey());
 
-        // Step 2: action done -> continue to step 3
+        // Step 2: action done -> continue to step 3 (terminal RESOLVE) -> RESOLVED.
         ConversationResponse after2 = conversationService.sendMessage(after1.id(),
                 new MessageRequest("đã kiểm tra xong", null,
                         new StepResultDto("TROUBLESHOOT", "flow-printer", "2", "CONTINUE", null, null)));
-        assertEquals("3", after2.currentStepKey());
-
-        // Step 3: resolve
-        ConversationResponse after3 = conversationService.sendMessage(after2.id(),
-                new MessageRequest("in được rồi", null,
-                        new StepResultDto("TROUBLESHOOT", "flow-printer", "3", "RESOLVE", "đã in được", null)));
-        assertEquals("RESOLVED", after3.status());
-        assertNotNull(after3.resolvedAt());
+        assertEquals("RESOLVED", after2.status());
+        assertNotNull(after2.resolvedAt());
 
         // Case created + resolved.
         List<CaseSummary> cases = conversationService.listCases("RESOLVED");
