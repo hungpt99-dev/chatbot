@@ -1,5 +1,6 @@
 package com.helpdesk.web.dto;
 
+import com.helpdesk.domain.model.ConversationStatus;
 import com.helpdesk.domain.model.SupportCase;
 
 import java.time.Instant;
@@ -12,7 +13,7 @@ public record CaseSummary(
         String problem,
         String sopId,
         String sopTitle,
-        String status,
+        ConversationStatus status,
         String failedStepKey,
         Instant startedAt,
         Instant resolvedAt,
@@ -21,7 +22,7 @@ public record CaseSummary(
     public static CaseSummary from(SupportCase c) {
         return new CaseSummary(
                 c.getReference(), c.getConversationId(), c.getEmployee(), c.getProblem(),
-                c.getSopId(), c.getSopTitle(), c.getStatus().name(), c.getFailedStepKey(),
+                c.getSopId(), c.getSopTitle(), c.getStatus(), c.getFailedStepKey(),
                 c.getStartedAt(), c.getResolvedAt(), c.getEscalatedAt());
     }
 }

@@ -100,7 +100,7 @@ password-reset · email-cannot-send · vpn-cannot-connect · monitor-not-working
 - `docs/PHASE_1D.md` — chat UI.
 - `docs/PHASE_1E.md` — operator docs, runbook, expanded tests.
 - `docs/OPERATOR.md` — runbook: run, health/mode, config, daily checks, troubleshooting.
-- `docs/adr/` — Architecture Decision Records (ADR-0001 stack, ADR-0005 engine, ADR-0006 LLM).
+- `docs/adr/` — Architecture Decision Records (ADR-0001 stack, ADR-0005 engine, ADR-0006 LLM, ADR-0007 DTO enums).
 
 ## Guardrails (carried into later phases)
 The AI must NOT invent SOP steps, skip required steps, execute commands, claim resolution

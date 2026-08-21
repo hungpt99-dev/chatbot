@@ -69,7 +69,7 @@ class LlmIntegrationTest {
         assertEquals("2", conv.currentStepKey());
         conv = conversationService.sendMessage(conv.id(), new MessageRequest("đã kiểm tra, không kẹt giấy", null, null));
         // step 2 -> terminal RESOLVE step 3 closes the conversation.
-        assertEquals("RESOLVED", conv.status());
+        assertEquals(ConversationStatus.RESOLVED, conv.status());
     }
 
     @Test
@@ -89,7 +89,7 @@ class LlmIntegrationTest {
         ConversationResponse conv = conversationService.create(new ConversationRequest("bob", "máy in không in được"));
         conv = conversationService.sendMessage(conv.id(), new MessageRequest("bật rồi", null, null)); // step 2
         conv = conversationService.sendMessage(conv.id(), new MessageRequest("in được chưa?", null, null)); // -> terminal 3 -> RESOLVED
-        assertEquals("RESOLVED", conv.status());
+        assertEquals(ConversationStatus.RESOLVED, conv.status());
     }
 
     @Test
@@ -121,6 +121,6 @@ class LlmIntegrationTest {
         ConversationResponse conv = conversationService.create(new ConversationRequest("dan", "máy in không in được"));
         conv = conversationService.sendMessage(conv.id(), new MessageRequest("bật", null, null)); // step 2
         conv = conversationService.sendMessage(conv.id(), new MessageRequest("vẫn lỗi", null, null)); // ESCALATE at step 2
-        assertEquals("ESCALATED", conv.status());
+        assertEquals(ConversationStatus.ESCALATED, conv.status());
     }
 }

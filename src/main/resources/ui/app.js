@@ -66,13 +66,13 @@ function renderThread(conv) {
 function renderMessage(m) {
   const thread = $('thread');
   const el = document.createElement('div');
-  const role = (m.role || '').toLowerCase();
-  if (role === 'user') {
-    el.className = 'msg user';
-    el.innerHTML = `<div class="role">You</div>${escapeHtml(m.content)}`;
-  } else if (role === 'system') {
+  // kind discriminates system/internal notes; role discriminates author (USER/ASSISTANT).
+  if (m.kind === 'SYSTEM') {
     el.className = 'msg system';
     el.textContent = m.content;
+  } else if (m.role === 'USER') {
+    el.className = 'msg user';
+    el.innerHTML = `<div class="role">You</div>${escapeHtml(m.content)}`;
   } else {
     el.className = 'msg ai';
     let html = `<div class="role">Assistant</div>${escapeHtml(m.content)}`;
@@ -84,7 +84,7 @@ function renderMessage(m) {
 }
 
 function addSystem(text) {
-  renderMessage({ role: 'system', content: text });
+  renderMessage({ kind: 'SYSTEM', role: 'ASSISTANT', content: text });
 }
 
 async function startConversation(e) {

@@ -129,7 +129,7 @@ public class ConversationService {
         if (req.stepResult() != null) {
             outcome = new StepOutcome(
                     req.branchKey(),
-                    req.stepResult().result(),
+                    req.stepResult().result().name(),
                     req.stepResult().resolved(),
                     req.message(),
                     req.stepResult().escalationReason());
@@ -253,7 +253,7 @@ public class ConversationService {
     private List<com.helpdesk.web.dto.MessageDto> messagesOf(Long conversationId) {
         return messageRepository.findByConversationIdOrderBySeqAsc(conversationId).stream()
                 .map(m -> new com.helpdesk.web.dto.MessageDto(
-                        m.getSeq(), m.getRole().name(), m.getKind().name(),
+                        m.getSeq(), m.getRole(), m.getKind(),
                         m.getContent(), m.getStepKey(), m.getCreatedAt()))
                 .toList();
     }

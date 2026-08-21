@@ -1,5 +1,6 @@
 package com.helpdesk.application;
 
+import com.helpdesk.domain.engine.StepResult;
 import com.helpdesk.domain.model.ConversationStatus;
 import com.helpdesk.domain.repository.AuditEventRepository;
 import com.helpdesk.domain.repository.ConversationMessageRepository;
@@ -68,7 +69,7 @@ class ConversationFlowTest {
 
         assertNotNull(conv.id());
         assertEquals("flow-printer", conv.sopId());
-        assertEquals("IN_PROGRESS", conv.status());
+        assertEquals(ConversationStatus.IN_PROGRESS, conv.status());
         assertFalse(conv.messages().isEmpty());
 
         // Step 1: user says "bật" -> branch 'on' -> step 2
@@ -79,8 +80,8 @@ class ConversationFlowTest {
         // Step 2: action done -> continue to step 3 (terminal RESOLVE) -> RESOLVED.
         ConversationResponse after2 = conversationService.sendMessage(after1.id(),
                 new MessageRequest("đã kiểm tra xong", null,
-                        new StepResultDto("TROUBLESHOOT", "flow-printer", "2", "CONTINUE", null, null)));
-        assertEquals("RESOLVED", after2.status());
+                new StepResultDto(StepResult.CONTINUE, "flow-printer", "2", null, null)));
+        assertEquals(ConversationStatus.RESOLVED, after2.status());
         assertNotNull(after2.resolvedAt());
 
         // Case created + resolved.
@@ -100,9 +101,9 @@ class ConversationFlowTest {
         // User reports it still doesn't work -> escalate.
         ConversationResponse after = conversationService.sendMessage(conv.id(),
                 new MessageRequest("vẫn không được, bỏ cuộc", null,
-                        new StepResultDto("TROUBLESHOOT", "flow-printer2", "1", "ESCALATE", null,
+                        new StepResultDto(StepResult.ESCALATE, "flow-printer2", "1", null,
                                 "đã thử bật và kiểm tra kẹt giấy nhưng không được")));
-        assertEquals("ESCALATED", after.status());
+        assertEquals(ConversationStatus.ESCALATED, after.status());
         assertNotNull(after.escalatedAt());
 
         List<CaseSummary> cases = conversationService.listCases("ESCALATED");
@@ -118,7 +119,7 @@ class ConversationFlowTest {
                 new ConversationRequest("carol", "máy in không in được"));
         conversationService.sendMessage(conv.id(),
                 new MessageRequest("vẫn không được, bỏ cuộc", null,
-                        new StepResultDto("TROUBLESHOOT", "flow-printer3", "1", "ESCALATE", null,
+                        new StepResultDto(StepResult.ESCALATE, "flow-printer3", "1", null,
                                 "đã thử nhưng không được")));
 
         assertThrows(com.helpdesk.web.ConversationClosedException.class, () ->
