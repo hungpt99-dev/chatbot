@@ -1,0 +1,24 @@
+{
+  "id": "monitor-not-working",
+  "title": "Monitor / display not working",
+  "description": "Troubleshoot a monitor with no image, flickering, or wrong resolution.",
+  "category": "IT / Hardware",
+  "problemDescription": "Màn hình không hiện / máy tính không lên hình / màn hình bị lỗi.",
+  "symptoms": ["màn hình đen", "no display", "máy tính không lên hình", "monitor flicker", "sai độ phân giải"],
+  "prerequisites": ["Employee is at the desk with the monitor and PC"],
+  "expectedResult": "Display shows the desktop correctly.",
+  "failureCondition": "No image after cable/power checks.",
+  "escalationCondition": "Suspected dead panel, GPU, or cable hardware fault.",
+  "steps": [
+    {"stepKey": "1", "stepOrder": 1, "instruction": "Đèn nguồn của màn hình có sáng không?", "type": "QUESTION", "defaultNext": "2", "branches": [{"branchKey": "no_power", "conditionText": "không có nguồn / no power", "gotoStepKey": "1b"}]},
+    {"stepKey": "1b", "stepOrder": 2, "instruction": "Kiểm tra dây nguồn màn hình đã cắm chặt và ổ cắm có điện chưa.", "type": "ACTION", "defaultNext": "2"},
+    {"stepKey": "2", "stepOrder": 3, "instruction": "Kiểm tra dây cáp hình (HDMI/DisplayPort) hai đầu đã cắm chặt chưa.", "type": "CHECK", "defaultNext": "3", "branches": [{"branchKey": "loose_cable", "conditionText": "dây lỏng / loose cable", "gotoStepKey": "2b"}]},
+    {"stepKey": "2b", "stepOrder": 4, "instruction": "Cắm chặt lại dây cáp, thử đổi cổng hoặc dây khác nếu có.", "type": "ACTION", "defaultNext": "3"},
+    {"stepKey": "3", "stepOrder": 5, "instruction": "Nhấn nút nguồn máy tính, chờ khởi động. Có hình chưa?", "type": "CHECK", "defaultNext": "4", "branches": [{"branchKey": "flicker", "conditionText": "nhấp nháy / flicker", "gotoStepKey": "3b"}, {"branchKey": "wrong_res", "conditionText": "sai độ phân giải / wrong resolution", "gotoStepKey": "3c"}]},
+    {"stepKey": "3b", "stepOrder": 6, "instruction": "Đổi tần số/chế độ trên màn hình, thử cáp khác. Nếu vẫn nhấp nháy, ghi nhận lỗi phần cứng.", "type": "ACTION", "defaultNext": "5"},
+    {"stepKey": "3c", "stepOrder": 7, "instruction": "Chuột phải màn hình > Cài đặt hiển thị > chọn đúng độ phân giải khuyên dùng.", "type": "ACTION", "defaultNext": "5"},
+    {"stepKey": "4", "stepOrder": 8, "instruction": "", "type": "ESCALATE", "terminal": true, "terminalKind": "RESOLVE"},
+    {"stepKey": "5", "stepOrder": 9, "instruction": "", "type": "ESCALATE", "terminal": true, "terminalKind": "ESCALATE"},
+    {"stepKey": "6", "stepOrder": 10, "instruction": "", "type": "ESCALATE", "terminal": true, "terminalKind": "RESOLVE"}
+  ]
+}

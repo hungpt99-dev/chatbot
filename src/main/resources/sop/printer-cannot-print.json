@@ -1,0 +1,27 @@
+{
+  "id": "printer-cannot-print",
+  "title": "Printer cannot print",
+  "description": "Troubleshoot a printer that will not print (office / shared printer).",
+  "category": "IT / Printer",
+  "problemDescription": "Máy in không in được. Printer is not printing or print jobs are stuck.",
+  "symptoms": ["không in được", "print job stuck", "printer offline", "paper jam", "không in", "máy in"],
+  "prerequisites": ["Employee is at the printer", "Employee can see the printer display"],
+  "expectedResult": "Document prints successfully.",
+  "failureCondition": "After all steps the printer still does not print.",
+  "escalationCondition": "Hardware fault suspected or steps exhausted without resolution.",
+  "steps": [
+    {"stepKey": "1", "stepOrder": 1, "instruction": "Máy in có đang bật nguồn không? (Đèn nguồn có sáng không?)", "type": "QUESTION", "defaultNext": "2"},
+    {"stepKey": "2", "stepOrder": 2, "instruction": "Kiểm tra kết nối mạng của máy in (cáp hoặc wifi).", "type": "CHECK", "defaultNext": "3", "branches": [{"branchKey": "offline", "conditionText": "printer is offline / mất kết nối", "gotoStepKey": "2b"}]},
+    {"stepKey": "2b", "stepOrder": 3, "instruction": "Kiểm tra cáp mạng hoặc kết nối lại wifi của máy in, sau đó khởi động lại máy in.", "type": "ACTION", "defaultNext": "3"},
+    {"stepKey": "3", "stepOrder": 4, "instruction": "Trên màn hình máy in có hiển thị lỗi gì không? (ví dụ: Paper Jam, Toner low)", "type": "QUESTION", "defaultNext": "4", "branches": [{"branchKey": "paper_jam", "conditionText": "Paper Jam / kẹt giấy", "gotoStepKey": "3b"}, {"branchKey": "toner_low", "conditionText": "Toner low / hết mực", "gotoStepKey": "3c"}]},
+    {"stepKey": "3b", "stepOrder": 5, "instruction": "Mở khay giấy phía trước/sau, gỡ nhẹ tờ giấy bị kẹt, đóng lại và thử in lại.", "type": "ACTION", "defaultNext": "5"},
+    {"stepKey": "3c", "stepOrder": 6, "instruction": "Thông báo cho IT đổi hộp mực (toner). Không tự thay nếu chưa được hướng dẫn.", "type": "ACTION", "defaultNext": "5"},
+    {"stepKey": "4", "stepOrder": 7, "instruction": "Kiểm tra có đủ giấy trong khay không.", "type": "CHECK", "defaultNext": "5", "branches": [{"branchKey": "out_of_paper", "conditionText": "hết giấy / paper empty", "gotoStepKey": "4b"}]},
+    {"stepKey": "4b", "stepOrder": 8, "instruction": "Thêm giấy vào khay, căn chỉnh mép giấy, đóng khay.", "type": "ACTION", "defaultNext": "5"},
+    {"stepKey": "5", "stepOrder": 9, "instruction": "Mở hàng đợi in trên máy tính (Print Queue), kiểm tra có bản in bị kẹt không.", "type": "CHECK", "defaultNext": "6", "branches": [{"branchKey": "stuck_jobs", "conditionText": "có bản in bị kẹt / stuck jobs", "gotoStepKey": "6b"}]},
+    {"stepKey": "6", "stepOrder": 10, "instruction": "In thử một trang kiểm tra (Test Print).", "type": "CHECK", "defaultNext": "7", "branches": [{"branchKey": "still_broken", "conditionText": "vẫn không in được / still not printing", "gotoStepKey": "8"}]},
+    {"stepKey": "7", "stepOrder": 11, "instruction": "Tuyệt vời! Máy in đã in được. Xác nhận với tôi nhé.", "type": "CHECK", "defaultNext": "9", "branches": [{"branchKey": "ok", "conditionText": "đã in được / works", "gotoStepKey": "9"}]},
+    {"stepKey": "9", "stepOrder": 12, "instruction": "", "type": "ESCALATE", "terminal": true, "terminalKind": "RESOLVE"},
+    {"stepKey": "8", "stepOrder": 13, "instruction": "", "type": "ESCALATE", "terminal": true, "terminalKind": "ESCALATE"}
+  ]
+}

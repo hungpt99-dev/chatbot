@@ -1,0 +1,23 @@
+{
+  "id": "wifi-cannot-connect",
+  "title": "WiFi cannot connect",
+  "description": "Troubleshoot a device that cannot join the company WiFi.",
+  "category": "IT / Network",
+  "problemDescription": "Không kết nối được WiFi công ty / WiFi không vào được.",
+  "symptoms": ["wifi không kết nối", "cannot connect wifi", "sai mật khẩu wifi", "wifi lỗi", "không vào được wifi"],
+  "prerequisites": ["Device sees the company WiFi SSID"],
+  "expectedResult": "Device connects to company WiFi with Internet access.",
+  "failureCondition": "Cannot authenticate or stay connected.",
+  "escalationCondition": "SSID hidden, MAC filtering, or radius issue suspected.",
+  "steps": [
+    {"stepKey": "1", "stepOrder": 1, "instruction": "Thiết bị có thấy tên WiFi công ty (SSID) không?", "type": "QUESTION", "defaultNext": "2", "branches": [{"branchKey": "no_ssid", "conditionText": "không thấy tên wifi / no SSID", "gotoStepKey": "1b"}]},
+    {"stepKey": "1b", "stepOrder": 2, "instruction": "Di chuyển gần hơn đến điểm phát sóng (access point) hoặc nhờ IT kiểm tra vùng phủ sóng.", "type": "ACTION", "defaultNext": "2"},
+    {"stepKey": "2", "stepOrder": 3, "instruction": "Nhập lại mật khẩu WiFi (chú ý chữ hoa/thường). Có báo sai mật khẩu không?", "type": "CHECK", "defaultNext": "3", "branches": [{"branchKey": "wrong_pw", "conditionText": "sai mật khẩu / wrong password", "gotoStepKey": "2b"}]},
+    {"stepKey": "2b", "stepOrder": 4, "instruction": "Lấy đúng mật khẩu WiFi mới nhất từ IT hoặc bảng thông báo, nhập lại.", "type": "ACTION", "defaultNext": "3"},
+    {"stepKey": "3", "stepOrder": 5, "instruction": "Quên mạng (Forget network) rồi kết nối lại từ đầu.", "type": "ACTION", "defaultNext": "4"},
+    {"stepKey": "4", "stepOrder": 6, "instruction": "Kết nối thành công và có Internet chưa?", "type": "CHECK", "defaultNext": "5", "branches": [{"branchKey": "connected", "conditionText": "đã kết nối / connected", "gotoStepKey": "6"}, {"branchKey": "still_fails", "conditionText": "vẫn không được / still fails", "gotoStepKey": "7"}]},
+    {"stepKey": "5", "stepOrder": 7, "instruction": "", "type": "ESCALATE", "terminal": true, "terminalKind": "RESOLVE"},
+    {"stepKey": "6", "stepOrder": 8, "instruction": "", "type": "ESCALATE", "terminal": true, "terminalKind": "RESOLVE"},
+    {"stepKey": "7", "stepOrder": 9, "instruction": "", "type": "ESCALATE", "terminal": true, "terminalKind": "ESCALATE"}
+  ]
+}

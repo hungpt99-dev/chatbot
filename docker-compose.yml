@@ -1,0 +1,14 @@
+services:
+  helpdesk:
+    build: .
+    ports:
+      - "8088:8080"
+    volumes:
+      - helpdesk-data:/data
+    environment:
+      SPRING_DATASOURCE_URL: "jdbc:h2:file:/data/helpdesk"
+      HELPDESK_SEED_ENABLED: "true"
+    restart: unless-stopped
+
+volumes:
+  helpdesk-data:

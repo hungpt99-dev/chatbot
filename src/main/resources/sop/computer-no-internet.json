@@ -1,0 +1,23 @@
+{
+  "id": "computer-no-internet",
+  "title": "Computer has no Internet",
+  "description": "Troubleshoot a workstation with no Internet connectivity (wired or wireless).",
+  "category": "IT / Network",
+  "problemDescription": "Máy tính không có mạng / không truy cập được Internet.",
+  "symptoms": ["không có mạng", "no internet", "mất mạng", "cannot connect", "máy tính không lên mạng"],
+  "prerequisites": ["Employee is at the computer"],
+  "expectedResult": "Computer can reach the Internet.",
+  "failureCondition": "Still no connectivity after basic steps.",
+  "escalationCondition": "Suspected switch/port or ISP fault.",
+  "steps": [
+    {"stepKey": "1", "stepOrder": 1, "instruction": "Kiểm tra biểu tượng mạng (Wi-Fi hoặc cáp) góc dưới màn hình có bị gạch chéo không?", "type": "QUESTION", "defaultNext": "2", "branches": [{"branchKey": "wifi_off", "conditionText": "Wi-Fi bị tắt / wifi off", "gotoStepKey": "1b"}]},
+    {"stepKey": "1b", "stepOrder": 2, "instruction": "Bật lại Wi-Fi (hoặc cắm dây mạng) và chờ vài giây.", "type": "ACTION", "defaultNext": "2"},
+    {"stepKey": "2", "stepOrder": 3, "instruction": "Thử mở một trang web khác hoặc ping gateway. Kết quả thế nào?", "type": "CHECK", "defaultNext": "3", "branches": [{"branchKey": "other_sites_ok", "conditionText": "trang khác mở được / other sites work", "gotoStepKey": "3b"}]},
+    {"stepKey": "3b", "stepOrder": 4, "instruction": "Trang web cụ thể có thể đang lỗi. Thử lại sau hoặc dùng bản dự phòng.", "type": "ACTION", "defaultNext": "6"},
+    {"stepKey": "3", "stepOrder": 5, "instruction": "Khởi động lại modem/router tại bàn (rút điện 10 giây rồi cắm lại).", "type": "ACTION", "defaultNext": "4"},
+    {"stepKey": "4", "stepOrder": 6, "instruction": "Khởi động lại máy tính.", "type": "ACTION", "defaultNext": "5"},
+    {"stepKey": "5", "stepOrder": 7, "instruction": "Sau khi khởi động lại, truy cập Internet được chưa?", "type": "CHECK", "defaultNext": "6", "branches": [{"branchKey": "still_down", "conditionText": "vẫn không có mạng / still down", "gotoStepKey": "7"}]},
+    {"stepKey": "6", "stepOrder": 8, "instruction": "", "type": "ESCALATE", "terminal": true, "terminalKind": "RESOLVE"},
+    {"stepKey": "7", "stepOrder": 9, "instruction": "", "type": "ESCALATE", "terminal": true, "terminalKind": "ESCALATE"}
+  ]
+}

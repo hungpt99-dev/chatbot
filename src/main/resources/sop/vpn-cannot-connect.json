@@ -1,0 +1,23 @@
+{
+  "id": "vpn-cannot-connect",
+  "title": "VPN cannot connect",
+  "description": "Troubleshoot the company VPN client failing to connect.",
+  "category": "IT / Network",
+  "problemDescription": "Không kết nối được VPN công ty / VPN lỗi.",
+  "symptoms": ["không vào được vpn", "vpn failed", "vpn timeout", "cannot connect vpn", "lỗi vpn"],
+  "prerequisites": ["Employee has VPN client installed", "Employee has valid credentials"],
+  "expectedResult": "VPN connects and internal resources are reachable.",
+  "failureCondition": "Client errors or cannot authenticate.",
+  "escalationCondition": "Cert expired, MFA issue, or gateway outage.",
+  "steps": [
+    {"stepKey": "1", "stepOrder": 1, "instruction": "Bạn có đang kết nối Internet bình thường không (ngoài VPN)?", "type": "QUESTION", "defaultNext": "2", "branches": [{"branchKey": "no_internet", "conditionText": "không có mạng / no internet", "gotoStepKey": "1b"}]},
+    {"stepKey": "1b", "stepOrder": 2, "instruction": "Xử lý lỗi Internet trước (xem SOP 'Computer has no Internet'), rồi thử VPN lại.", "type": "ACTION", "defaultNext": "2"},
+    {"stepKey": "2", "stepOrder": 3, "instruction": "Tắt VPN, khởi động lại ứng dụng VPN, bật lại và thử kết nối. Lỗi báo gì?", "type": "CHECK", "defaultNext": "3", "branches": [{"branchKey": "auth_fail", "conditionText": "sai tài khoản/MFA / auth fail", "gotoStepKey": "2b"}, {"branchKey": "timeout", "conditionText": "timeout / hết giờ", "gotoStepKey": "2c"}]},
+    {"stepKey": "2b", "stepOrder": 4, "instruction": "Nhập lại tài khoản/MFA đúng. Nếu MFA lỗi, chuyển sang SOP 'Cannot login'.", "type": "ACTION", "defaultNext": "3"},
+    {"stepKey": "2c", "stepOrder": 5, "instruction": "Đổi mạng khác (ví dụ 4G) hoặc tắt tường lửa cá nhân thử lại.", "type": "ACTION", "defaultNext": "3"},
+    {"stepKey": "3", "stepOrder": 6, "instruction": "VPN đã kết nối thành công chưa?", "type": "CHECK", "defaultNext": "4", "branches": [{"branchKey": "connected", "conditionText": "đã kết nối / connected", "gotoStepKey": "6"}, {"branchKey": "still_fail", "conditionText": "vẫn lỗi / still fails", "gotoStepKey": "5"}]},
+    {"stepKey": "4", "stepOrder": 7, "instruction": "", "type": "ESCALATE", "terminal": true, "terminalKind": "RESOLVE"},
+    {"stepKey": "5", "stepOrder": 8, "instruction": "", "type": "ESCALATE", "terminal": true, "terminalKind": "ESCALATE"},
+    {"stepKey": "6", "stepOrder": 9, "instruction": "", "type": "ESCALATE", "terminal": true, "terminalKind": "RESOLVE"}
+  ]
+}

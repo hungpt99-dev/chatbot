@@ -1,0 +1,21 @@
+{
+  "id": "cannot-login",
+  "title": "Cannot login to company account",
+  "description": "Troubleshoot an employee unable to log into a company system/account.",
+  "category": "IT / Account",
+  "problemDescription": "Không đăng nhập được tài khoản công ty / login failed.",
+  "symptoms": ["không đăng nhập được", "login failed", "sai tài khoản", "bị khóa tài khoản", "cannot login"],
+  "prerequisites": ["Employee knows their username/email"],
+  "expectedResult": "Employee logs in successfully.",
+  "failureCondition": "Credentials correct but still cannot log in.",
+  "escalationCondition": "Account locked, MFA broken, or directory issue.",
+  "steps": [
+    {"stepKey": "1", "stepOrder": 1, "instruction": "Thông báo lỗi cụ thể là gì? (Sai mật khẩu / Tài khoản bị khóa / Khác)", "type": "QUESTION", "defaultNext": "2", "branches": [{"branchKey": "wrong_pw", "conditionText": "sai mật khẩu / wrong password", "gotoStepKey": "1b"}, {"branchKey": "locked", "conditionText": "tài khoản bị khóa / locked", "gotoStepKey": "4"}]},
+    {"stepKey": "1b", "stepOrder": 2, "instruction": "Kiểm tra Caps Lock, bàn phím, và chắc chắn đúng tài khoản. Thử lại.", "type": "ACTION", "defaultNext": "2"},
+    {"stepKey": "2", "stepOrder": 3, "instruction": "Đăng nhập được chưa?", "type": "CHECK", "defaultNext": "3", "branches": [{"branchKey": "ok", "conditionText": "đăng nhập được / ok", "gotoStepKey": "6"}, {"branchKey": "still_fail", "conditionText": "vẫn thất bại / still fails", "gotoStepKey": "4"}]},
+    {"stepKey": "3", "stepOrder": 4, "instruction": "", "type": "ESCALATE", "terminal": true, "terminalKind": "RESOLVE"},
+    {"stepKey": "4", "stepOrder": 5, "instruction": "Nếu tài khoản bị khóa hoặc cần MFA: đây cần IT xử lý. Ghi nhận yêu cầu.", "type": "ACTION", "defaultNext": "5"},
+    {"stepKey": "5", "stepOrder": 6, "instruction": "", "type": "ESCALATE", "terminal": true, "terminalKind": "ESCALATE"},
+    {"stepKey": "6", "stepOrder": 7, "instruction": "", "type": "ESCALATE", "terminal": true, "terminalKind": "RESOLVE"}
+  ]
+}

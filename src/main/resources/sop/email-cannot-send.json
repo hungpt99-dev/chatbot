@@ -1,0 +1,23 @@
+{
+  "id": "email-cannot-send",
+  "title": "Email cannot send",
+  "description": "Troubleshoot outbound email that fails to send or is stuck in Outbox.",
+  "category": "IT / Email",
+  "problemDescription": "Không gửi được email / email bị kẹt ở Hộp thư đi.",
+  "symptoms": ["không gửi được email", "email stuck", "cannot send email", "email bị kẹt", "lỗi gửi mail"],
+  "prerequisites": ["Employee is in the mail client (Outlook/Webmail)"],
+  "expectedResult": "Email sends successfully.",
+  "failureCondition": "Message stays in Outbox or returns a bounce.",
+  "escalationCondition": "Server-side mail relay or quota issue suspected.",
+  "steps": [
+    {"stepKey": "1", "stepOrder": 1, "instruction": "Email có bị kẹt ở Hộp thư đi (Outbox) không?", "type": "QUESTION", "defaultNext": "2", "branches": [{"branchKey": "stuck_outbox", "conditionText": "bị kẹt outbox / stuck", "gotoStepKey": "1b"}]},
+    {"stepKey": "1b", "stepOrder": 2, "instruction": "Kiểm tra kết nối mạng, nhấn 'Gửi/Đồng bộ' lại. Nếu vẫn kẹt, khởi động lại ứng dụng mail.", "type": "ACTION", "defaultNext": "2"},
+    {"stepKey": "2", "stepOrder": 3, "instruction": "Có báo lỗi gì không? (Sai địa chỉ, tệp quá lớn, hay lỗi máy chủ)", "type": "QUESTION", "defaultNext": "3", "branches": [{"branchKey": "bad_address", "conditionText": "sai địa chỉ / bad address", "gotoStepKey": "2b"}, {"branchKey": "too_large", "conditionText": "tệp quá lớn / too large", "gotoStepKey": "2c"}]},
+    {"stepKey": "2b", "stepOrder": 4, "instruction": "Sửa địa chỉ email người nhận, kiểm tra ký tự thừa, gửi lại.", "type": "ACTION", "defaultNext": "3"},
+    {"stepKey": "2c", "stepOrder": 5, "instruction": "Thu nhỏ hoặc nén tệp đính kèm (dưới giới hạn), hoặc dùng liên kết chia sẻ thay vì đính kèm.", "type": "ACTION", "defaultNext": "3"},
+    {"stepKey": "3", "stepOrder": 6, "instruction": "Thử gửi lại email bây giờ.", "type": "CHECK", "defaultNext": "4", "branches": [{"branchKey": "sent", "conditionText": "gửi thành công / sent", "gotoStepKey": "6"}, {"branchKey": "still_fail", "conditionText": "vẫn lỗi / still fails", "gotoStepKey": "5"}]},
+    {"stepKey": "4", "stepOrder": 7, "instruction": "", "type": "ESCALATE", "terminal": true, "terminalKind": "RESOLVE"},
+    {"stepKey": "5", "stepOrder": 8, "instruction": "", "type": "ESCALATE", "terminal": true, "terminalKind": "ESCALATE"},
+    {"stepKey": "6", "stepOrder": 9, "instruction": "", "type": "ESCALATE", "terminal": true, "terminalKind": "RESOLVE"}
+  ]
+}
