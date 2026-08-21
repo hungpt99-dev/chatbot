@@ -67,9 +67,12 @@ class SopExecutionEngineTest {
     }
 
     @Test
-    void explicitResolveEndsResolved() {
+    void resolveOnlyHonoredAtTerminalResolveStep() {
+        // Guardrail: an explicit RESOLVE at a non-terminal step must NOT close the
+        // conversation — the SOP's own terminal RESOLVE step is the evidence.
         EngineResult r = engine.advance(sop(), step("2"), StepOutcome.of(null, "RESOLVE"));
-        assertEquals("RESOLVED", r.status());
+        assertEquals("IN_PROGRESS", r.status());
+        assertFalse(r.conversationOver());
     }
 
     @Test

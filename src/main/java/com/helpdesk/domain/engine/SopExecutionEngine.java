@@ -44,14 +44,24 @@ public class SopExecutionEngine {
                     current.stepKey(), current.instruction(), outcome.stepResult()));
         }
 
-        // 1) Terminal step reached via previous routing, or explicit RESOLVE/ESCALATE.
-        if (outcome.isResolve()
-                || (current != null && current.terminal() && current.terminalKind() == com.helpdesk.domain.model.TerminalKind.RESOLVE)) {
-            return finish(current, ConversationStatus.RESOLVED, executed);
-        }
-        if (outcome.isEscalate()
-                || (current != null && current.terminal() && current.terminalKind() == com.helpdesk.domain.model.TerminalKind.ESCALATE)) {
+        // 1) Terminal handling.
+        // Guardrails:
+        //  - ESCALATE intent is honored at any step (handing off to a human is safe).
+        //  - Reaching a terminal step ends the conversation per that step's kind:
+        //      RESOLVE terminal -> RESOLVED (the step itself is the resolution evidence),
+        //      ESCALATE terminal -> ESCALATED.
+        //  - A RESOLVE intent at a NON-terminal step is ignored (the AI may not claim a
+        //    problem fixed without the SOP's resolution step); routing continues normally.
+        if (outcome.isEscalate()) {
             return finish(current, ConversationStatus.ESCALATED, executed);
+        }
+        if (current != null && current.terminal()) {
+            if (current.terminalKind() == com.helpdesk.domain.model.TerminalKind.RESOLVE) {
+                return finish(current, ConversationStatus.RESOLVED, executed);
+            }
+            if (current.terminalKind() == com.helpdesk.domain.model.TerminalKind.ESCALATE) {
+                return finish(current, ConversationStatus.ESCALATED, executed);
+            }
         }
 
         // 2) Determine the next step key.

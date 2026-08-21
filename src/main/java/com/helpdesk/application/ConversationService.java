@@ -1,6 +1,9 @@
 package com.helpdesk.application;
 
+import com.helpdesk.domain.engine.ConversationSnapshot;
 import com.helpdesk.domain.engine.EngineResult;
+import com.helpdesk.domain.engine.LlmPort;
+import com.helpdesk.domain.engine.LlmStepDecision;
 import com.helpdesk.domain.engine.OfflineInterpreter;
 import com.helpdesk.domain.engine.ResponseComposer;
 import com.helpdesk.domain.engine.SopExecutionEngine;
@@ -48,6 +51,7 @@ public class ConversationService {
     private final AuditEventRepository auditRepository;
     private final SopService sopService;
     private final SopExecutionEngine engine;
+    private final LlmPort llmPort;
     private final OfflineInterpreter interpreter;
     private final ResponseComposer composer;
 
@@ -57,6 +61,7 @@ public class ConversationService {
                                AuditEventRepository auditRepository,
                                SopService sopService,
                                SopExecutionEngine engine,
+                               LlmPort llmPort,
                                OfflineInterpreter interpreter,
                                ResponseComposer composer) {
         this.conversationRepository = conversationRepository;
@@ -65,6 +70,7 @@ public class ConversationService {
         this.auditRepository = auditRepository;
         this.sopService = sopService;
         this.engine = engine;
+        this.llmPort = llmPort;
         this.interpreter = interpreter;
         this.composer = composer;
     }
@@ -117,7 +123,8 @@ public class ConversationService {
         appendMessage(conv, MessageRole.USER, MessageKind.ANSWER, req.message(), sop.getId(), conv.getCurrentStepKey(), null, null);
         conv.setLastUserMessage(req.message());
 
-        // Decide the outcome: explicit (from request) or offline-interpreted.
+        // Decide the outcome. Priority: explicit structured result from the caller
+        // (tests/curl) > LLM when configured > deterministic offline interpreter.
         StepOutcome outcome;
         if (req.stepResult() != null) {
             outcome = new StepOutcome(
@@ -126,6 +133,21 @@ public class ConversationService {
                     req.stepResult().resolved(),
                     req.message(),
                     req.stepResult().escalationReason());
+        } else if (llmPort.isConfigured()) {
+            LlmStepDecision decision = llmPort.decide(snapshotFor(conv, sopDto, current), req.message());
+            if (decision != null) {
+                // Guardrail: only trust a branchKey that is enumerated on the current step.
+                String branchKey = decision.hasBranch() && branchExists(current, decision.branchKey())
+                        ? decision.branchKey() : null;
+                String intent = decision.intent() == null ? "CONTINUE" : decision.intent().toUpperCase();
+                outcome = new StepOutcome(branchKey, intent, decision.stepResult(),
+                        req.message(), decision.escalationReason());
+                auditRepository.save(new AuditEvent(conv.getId(), sop.getId(), current.stepKey(),
+                        "LLM_DECISION", "intent=" + intent + "; branch=" + branchKey
+                        + (decision.response() != null ? "; modelReply=" + decision.response() : "")));
+            } else {
+                outcome = interpreter.interpret(req.message(), current);
+            }
         } else {
             outcome = interpreter.interpret(req.message(), current);
         }
@@ -194,6 +216,19 @@ public class ConversationService {
     private SopResponse.StepDto currentStep(SopResponse sop, String key) {
         if (key == null) return null;
         return sop.steps().stream().filter(s -> s.stepKey().equals(key)).findFirst().orElse(null);
+    }
+
+    private boolean branchExists(SopResponse.StepDto step, String branchKey) {
+        if (step == null || step.branches() == null || branchKey == null) return false;
+        return step.branches().stream().anyMatch(b -> branchKey.equals(b.branchKey()));
+    }
+
+    private ConversationSnapshot snapshotFor(Conversation conv, SopResponse sopDto, SopResponse.StepDto current) {
+        List<String> recent = messageRepository.findByConversationIdOrderBySeqAsc(conv.getId()).stream()
+                .map(m -> m.getRole().name() + ": " + m.getContent())
+                .toList();
+        return new ConversationSnapshot(
+                String.valueOf(conv.getId()), sopDto.id(), sopDto.title(), current, recent);
     }
 
     private MessageKind kindFor(EngineResult result) {

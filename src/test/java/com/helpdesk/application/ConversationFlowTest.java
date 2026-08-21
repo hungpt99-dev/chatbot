@@ -123,8 +123,9 @@ class ConversationFlowTest {
         ConversationResponse conv = conversationService.create(
                 new ConversationRequest("carol", "máy in không in được"));
         conversationService.sendMessage(conv.id(),
-                new MessageRequest("xong rồi", null,
-                        new StepResultDto("TROUBLESHOOT", "flow-printer3", "1", "RESOLVE", "ok", null)));
+                new MessageRequest("vẫn không được, bỏ cuộc", null,
+                        new StepResultDto("TROUBLESHOOT", "flow-printer3", "1", "ESCALATE", null,
+                                "đã thử nhưng không được")));
 
         assertThrows(com.helpdesk.web.ConversationClosedException.class, () ->
                 conversationService.sendMessage(conv.id(),

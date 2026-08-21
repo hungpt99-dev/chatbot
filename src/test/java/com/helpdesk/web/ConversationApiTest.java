@@ -59,9 +59,14 @@ class ConversationApiTest {
 
         Long id = objectMapper.readTree(body).get("id").asLong();
 
-        // Resolve on step 1 -> RESOLVED.
+        // Advance to the terminal step (step 2), then resolve there.
+        mockMvc.perform(post("/api/conversations/" + id + "/messages")
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"message\":\"bật rồi\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.currentStepKey").value("2"));
+
         String msg = """
-                {"message":"xong rồi","stepResult":{"intent":"TROUBLESHOOT","sopId":"api-printer","currentStep":"1","result":"RESOLVE","resolved":"ok"}}""";
+                {"message":"xong rồi","stepResult":{"intent":"TROUBLESHOOT","sopId":"api-printer","currentStep":"2","result":"RESOLVE","resolved":"ok"}}""";
         mockMvc.perform(post("/api/conversations/" + id + "/messages").contentType(MediaType.APPLICATION_JSON).content(msg))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("RESOLVED"));
@@ -92,8 +97,14 @@ class ConversationApiTest {
                 .andExpect(status().isCreated()).andReturn().getResponse().getContentAsString();
         Long id = objectMapper.readTree(body).get("id").asLong();
 
+        // Advance to terminal step 2, then resolve (closes), then 409 on next.
+        mockMvc.perform(post("/api/conversations/" + id + "/messages")
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"message\":\"bật rồi\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.currentStepKey").value("2"));
+
         String msg = """
-                {"message":"xong","stepResult":{"intent":"TROUBLESHOOT","sopId":"api-printer","currentStep":"1","result":"RESOLVE"}}""";
+                {"message":"xong","stepResult":{"intent":"TROUBLESHOOT","sopId":"api-printer","currentStep":"2","result":"RESOLVE"}}""";
         mockMvc.perform(post("/api/conversations/" + id + "/messages").contentType(MediaType.APPLICATION_JSON).content(msg))
                 .andExpect(status().isOk());
 

@@ -6,7 +6,8 @@ corpus — it never invents steps. This is the greenfield `chatbot` repository.
 
 > Status: **Phase 1A complete** (SOP model, CRUD, lexical retrieval, 8 seed SOPs, tests).
 > **Phase 1B complete** (conversation flow, deterministic execution engine, case tracking, audit, 37 tests green).
-> Phases 1C–1E follow (LLM/RAG, chat UI, packaging/docs).
+> **Phase 1C complete** (BYOK LLM integration via `LlmPort`, branch-key validation, off-mode fallback, 41 tests green).
+> Phases 1D–1E follow (chat UI, packaging/docs).
 
 ## Architecture
 ```
@@ -19,8 +20,8 @@ Employee problem
 ```
 The SOP is a **directed graph** (`SopStep.defaultNext` + `SopStepBranch` conditions).
 The AI only *proposes* an outcome (branch key); the engine *decides* the next step and
-records it. The LLM (Phase 1C) will replace `OfflineInterpreter` without touching the
-engine — see `docs/adr/ADR-0005-engine.md`.
+records it. The LLM (Phase 1C) implements `LlmPort` and replaces `OfflineInterpreter`
+without touching the engine — see `docs/adr/ADR-0005-engine.md` and `docs/adr/ADR-0006-llm.md`.
 
 ## Stack
 - Java 21 · Spring Boot 3.3.5 · Gradle 8.10.2 (built via the `gradle:8.10.2-jdk21` Docker
@@ -38,7 +39,17 @@ docker run --rm -v "$PWD":/work -w /work -v gradle-cache:/ghome -e GRADLE_USER_H
 # Build + run the app (jar is named ai-helpdesk-0.1.0.jar)
 docker compose up --build
 # → http://localhost:8088/api/sops   (host 8088 → container 8080; change in docker-compose.yml if busy)
+
+# With an LLM key (BYOK; empty key ⇒ off-mode, deterministic interpreter only)
+HELPDESK_LLM_API_KEY=sk-... docker compose up --build
 ```
+
+## LLM integration (Phase 1C)
+The LLM is a drop-in interpreter behind `LlmPort` (`OpenAiCompatibleLlmPort`, OpenAI
+`/chat/completions`). Configure via `helpdesk.llm.*` (`base-url`, `api-key` from
+`HELPDESK_LLM_API_KEY`, `model`, `system-prompt`). The app **validates** the model's
+`branchKey` against the current step and only honors `RESOLVE` at a terminal step; any
+provider error degrades to the offline interpreter. No key ⇒ fully runnable off-mode.
 
 ## API
 | Method | Path | Purpose |
@@ -67,7 +78,7 @@ password-reset · email-cannot-send · vpn-cannot-connect · monitor-not-working
 - `docs/PROPOSAL.md` — full architecture proposal (domain model, state machine, RAG flow, API).
 - `docs/PHASE_1A.md` — what shipped in Phase 1A + decisions.
 - `docs/PHASE_1B.md` — conversation, execution engine, case tracking, audit.
-- `docs/adr/` — Architecture Decision Records (ADR-0001 stack, ADR-0005 engine).
+- `docs/adr/` — Architecture Decision Records (ADR-0001 stack, ADR-0005 engine, ADR-0006 LLM).
 
 ## Guardrails (carried into later phases)
 The AI must NOT invent SOP steps, skip required steps, execute commands, claim resolution

@@ -21,6 +21,18 @@ spring:
 helpdesk:
   seed:
     enabled: true
+  llm:
+    base-url: ${HELPDESK_LLM_BASE_URL:https://api.openai.com/v1}
+    api-key: ${HELPDESK_LLM_API_KEY:}
+    model: ${HELPDESK_LLM_MODEL:gpt-4o-mini}
+    system-prompt: >-
+      You are an internal IT support assistant. You guide employees through a
+      predefined SOP step by step. You must ONLY choose a branchKey that is
+      explicitly enumerated for the current step, or return null. You may never
+      invent steps or skip required steps. If the employee indicates the problem
+      is resolved, return intent RESOLVE. If it cannot be resolved by the SOP,
+      return intent ESCALATE with a reason. Keep replies concise and in the
+      employee's language.
 
 server:
   port: 8080
