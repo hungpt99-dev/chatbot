@@ -39,10 +39,10 @@ public class OfflineInterpreter {
         String msg = userMessage == null ? "" : userMessage.toLowerCase();
 
         if (containsAny(msg, ESCALATE_TOKENS)) {
-            return StepOutcome.of(null, "ESCALATE");
+            return StepOutcome.of(null, StepResult.ESCALATE);
         }
         if (containsAny(msg, RESOLVE_TOKENS)) {
-            return StepOutcome.of(null, "RESOLVE");
+            return StepOutcome.of(null, StepResult.RESOLVE);
         }
         if (current != null && current.branches() != null && !current.branches().isEmpty()) {
             Optional<SopResponse.BranchDto> hit = current.branches().stream()
@@ -54,11 +54,11 @@ public class OfflineInterpreter {
                     })
                     .findFirst();
             if (hit.isPresent()) {
-                return StepOutcome.of(hit.get().branchKey(), "CONTINUE");
+                return StepOutcome.of(hit.get().branchKey(), StepResult.CONTINUE);
             }
         }
         // No decisive signal: continue along the default path.
-        return StepOutcome.of(null, "CONTINUE");
+        return StepOutcome.of(null, StepResult.CONTINUE);
     }
 
     private boolean containsAny(String haystack, List<String> needles) {

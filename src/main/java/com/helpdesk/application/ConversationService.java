@@ -8,6 +8,7 @@ import com.helpdesk.domain.engine.OfflineInterpreter;
 import com.helpdesk.domain.engine.ResponseComposer;
 import com.helpdesk.domain.engine.SopExecutionEngine;
 import com.helpdesk.domain.engine.StepOutcome;
+import com.helpdesk.domain.engine.StepResult;
 import com.helpdesk.domain.model.AuditEvent;
 import com.helpdesk.domain.model.Conversation;
 import com.helpdesk.domain.model.ConversationMessage;
@@ -129,7 +130,7 @@ public class ConversationService {
         if (req.stepResult() != null) {
             outcome = new StepOutcome(
                     req.branchKey(),
-                    req.stepResult().result().name(),
+                    req.stepResult().result(),
                     req.stepResult().resolved(),
                     req.message(),
                     req.stepResult().escalationReason());
@@ -139,7 +140,8 @@ public class ConversationService {
                 // Guardrail: only trust a branchKey that is enumerated on the current step.
                 String branchKey = decision.hasBranch() && branchExists(current, decision.branchKey())
                         ? decision.branchKey() : null;
-                String intent = decision.intent() == null ? "CONTINUE" : decision.intent().toUpperCase();
+                StepResult intent = StepResult.valueOf(
+                        decision.intent() == null ? "CONTINUE" : decision.intent().toUpperCase());
                 outcome = new StepOutcome(branchKey, intent, decision.stepResult(),
                         req.message(), decision.escalationReason());
                 auditRepository.save(new AuditEvent(conv.getId(), sop.getId(), current.stepKey(),
@@ -157,9 +159,9 @@ public class ConversationService {
         // Persist the assistant's response + record step result.
         String assistantText = composer.compose(result, sopDto);
         appendMessage(conv, MessageRole.ASSISTANT, kindFor(result), assistantText,
-                sop.getId(), result.currentStepKey(), "TROUBLESHOOT", outcome.stepResult());
+                sop.getId(), result.currentStepKey(), "TROUBLESHOOT", outcome.stepResult().name());
         auditRepository.save(new AuditEvent(conv.getId(), sop.getId(), conv.getCurrentStepKey(),
-                "STEP_RESULT", "stepResult=" + outcome.stepResult()
+                "STEP_RESULT", "stepResult=" + outcome.stepResult().name()
                         + (outcome.hasBranch() ? "; branch=" + outcome.branchKey() : "")));
 
         // Update conversation state.
@@ -167,7 +169,7 @@ public class ConversationService {
         conv.setStatus(ConversationStatus.valueOf(result.status()));
         conv.setLastAssistantMessage(assistantText);
         conv.setLastIntent("TROUBLESHOOT");
-        conv.setLastStepResult(outcome.stepResult());
+        conv.setLastStepResult(outcome.stepResult().name());
         if (result.conversationOver() && "RESOLVED".equals(result.status())) {
             conv.setResolvedAt(Instant.now());
         }

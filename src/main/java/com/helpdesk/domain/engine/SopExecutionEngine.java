@@ -41,7 +41,7 @@ public class SopExecutionEngine {
         List<EngineResult.ExecutedStep> executed = new ArrayList<>();
         if (current != null) {
             executed.add(new EngineResult.ExecutedStep(
-                    current.stepKey(), current.instruction(), outcome.stepResult()));
+                    current.stepKey(), current.instruction(), outcome.stepResult().name()));
         }
 
         // 1) Terminal handling.

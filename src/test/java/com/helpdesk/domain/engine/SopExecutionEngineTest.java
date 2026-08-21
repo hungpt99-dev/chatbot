@@ -40,7 +40,7 @@ class SopExecutionEngineTest {
 
     @Test
     void defaultNextUsedWhenNoBranch() {
-        EngineResult r = engine.advance(sop(), step("1"), StepOutcome.of(null, "CONTINUE"));
+        EngineResult r = engine.advance(sop(), step("1"), StepOutcome.of(null, StepResult.CONTINUE));
         assertEquals("2", r.currentStepKey());
         assertEquals("IN_PROGRESS", r.status());
         assertFalse(r.conversationOver());
@@ -48,20 +48,20 @@ class SopExecutionEngineTest {
 
     @Test
     void validBranchRoutesToGoto() {
-        EngineResult r = engine.advance(sop(), step("1"), StepOutcome.of("online", "CONTINUE"));
+        EngineResult r = engine.advance(sop(), step("1"), StepOutcome.of("online", StepResult.CONTINUE));
         assertEquals("3", r.currentStepKey());
     }
 
     @Test
     void invalidBranchFallsBackToDefaultNext() {
         // "sideways" is not an enumerated branch -> engine must NOT route to it.
-        EngineResult r = engine.advance(sop(), step("1"), StepOutcome.of("sideways", "CONTINUE"));
+        EngineResult r = engine.advance(sop(), step("1"), StepOutcome.of("sideways", StepResult.CONTINUE));
         assertEquals("2", r.currentStepKey());
     }
 
     @Test
     void reachingResolveTerminalEndsResolved() {
-        EngineResult r = engine.advance(sop(), step("3"), StepOutcome.of(null, "CONTINUE"));
+        EngineResult r = engine.advance(sop(), step("3"), StepOutcome.of(null, StepResult.CONTINUE));
         assertEquals("RESOLVED", r.status());
         assertTrue(r.conversationOver());
     }
@@ -71,7 +71,7 @@ class SopExecutionEngineTest {
         // Guardrail: a RESOLVE at a non-terminal step whose defaultNext is ALSO non-terminal
         // must NOT close the conversation — the SOP's own terminal RESOLVE step is the evidence.
         // (step1 -> defaultNext step2, which is non-terminal, so this stays open.)
-        EngineResult r = engine.advance(sop(), step("1"), StepOutcome.of(null, "RESOLVE"));
+        EngineResult r = engine.advance(sop(), step("1"), StepOutcome.of(null, StepResult.RESOLVE));
         assertEquals("IN_PROGRESS", r.status());
         assertEquals("2", r.currentStepKey());
         assertFalse(r.conversationOver());
@@ -79,14 +79,14 @@ class SopExecutionEngineTest {
 
     @Test
     void explicitEscalateEndsEscalated() {
-        EngineResult r = engine.advance(sop(), step("2"), StepOutcome.of(null, "ESCALATE"));
+        EngineResult r = engine.advance(sop(), step("2"), StepOutcome.of(null, StepResult.ESCALATE));
         assertEquals("ESCALATED", r.status());
         assertTrue(r.conversationOver());
     }
 
     @Test
     void reachingEscalateTerminalEndsEscalated() {
-        EngineResult r = engine.advance(sop(), step("9"), StepOutcome.of(null, "CONTINUE"));
+        EngineResult r = engine.advance(sop(), step("9"), StepOutcome.of(null, StepResult.CONTINUE));
         assertEquals("ESCALATED", r.status());
     }
 
@@ -97,13 +97,13 @@ class SopExecutionEngineTest {
                 StepType.ACTION, "does-not-exist", false, null, List.of());
         SopResponse s = new SopResponse("s", "S", null, null, null, null, null, null,
                 null, null, 1, null, null, List.of(dead));
-        EngineResult r = engine.advance(s, dead, StepOutcome.of(null, "CONTINUE"));
+        EngineResult r = engine.advance(s, dead, StepOutcome.of(null, StepResult.CONTINUE));
         assertEquals("ESCALATED", r.status());
     }
 
     @Test
     void executedHistoryRecorded() {
-        EngineResult r = engine.advance(sop(), step("1"), StepOutcome.of("online", "CONTINUE"));
+        EngineResult r = engine.advance(sop(), step("1"), StepOutcome.of("online", StepResult.CONTINUE));
         assertEquals(1, r.executed().size());
         assertEquals("1", r.executed().get(0).stepKey());
         assertEquals("CONTINUE", r.executed().get(0).stepResult());

@@ -7,18 +7,18 @@ package com.helpdesk.domain.engine;
  *
  * <p>branchKey is the chosen branch (one of the current step's enumerated
  * branchKeys, or null when none applies); resolved/answer are free-form text
- * recorded for the audit trail. stepResult maps to a SOP-driven conclusion:
- * CONTINUE, RESOLVE, or ESCALATE.
+ * recorded for the audit trail. {@code stepResult} is the SOP-driven conclusion,
+ * a typed {@link StepResult} (CONTINUE, RESOLVE, or ESCALATE) — never a raw string.
  */
 public record StepOutcome(
         String branchKey,
-        String stepResult,   // CONTINUE | RESOLVE | ESCALATE
+        StepResult stepResult,
         String resolved,     // free-form resolution note (when RESOLVE)
         String answer,       // free-form user-answer / narrative (recorded)
         String escalationReason // why escalation is needed (when ESCALATE)
 ) {
 
-    public static StepOutcome of(String branchKey, String stepResult) {
+    public static StepOutcome of(String branchKey, StepResult stepResult) {
         return new StepOutcome(branchKey, stepResult, null, null, null);
     }
 
@@ -27,14 +27,14 @@ public record StepOutcome(
     }
 
     public boolean isEscalate() {
-        return "ESCALATE".equalsIgnoreCase(stepResult);
+        return stepResult == StepResult.ESCALATE;
     }
 
     public boolean isResolve() {
-        return "RESOLVE".equalsIgnoreCase(stepResult);
+        return stepResult == StepResult.RESOLVE;
     }
 
     public boolean isContinue() {
-        return "CONTINUE".equalsIgnoreCase(stepResult);
+        return stepResult == StepResult.CONTINUE;
     }
 }

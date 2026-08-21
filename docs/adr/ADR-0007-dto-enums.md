@@ -33,10 +33,20 @@ project has a clear idiom — the request/response DTOs simply hadn't been held 
 - The UI must branch on the typed fields (`m.kind === 'SYSTEM'`, `m.role === 'USER'`), not
   on `role === 'system'` (there is no "system" role; system notes are `MessageKind.SYSTEM`).
 
-## Consequences
-- Compile-time safety: an invalid status/role/kind/result no longer compiles.
-- No behaviour change on the wire (enum name serialization is identical to the old string).
-- The UI `renderMessage` was updated to key off `kind` (SYSTEM) then `role` (USER/ASSISTANT).
+## Follow-up (same convention, engine-internal)
+The one remaining internal `String` was `StepOutcome.stepResult` ("CONTINUE"/"RESOLVE"/
+"ESCALATE") used by `OfflineInterpreter`, `LlmStepDecision` conversion, and the engine.
+This was tightened to the `StepResult` enum as well:
+- `StepOutcome.stepResult` is now `StepResult`; `isEscalate/isResolve/isContinue` compare
+  the enum (not `String.equalsIgnoreCase`).
+- `OfflineInterpreter` returns `StepResult.ESCALATE/RESOLVE/CONTINUE`.
+- `ConversationService` converts the LLM's raw `intent` string at the boundary via
+  `StepResult.valueOf(...)`.
+- `EngineResult.ExecutedStep.stepResult` stays `String` (audit/history display) and is
+  populated with `outcome.stepResult().name()` — no JSON-contract change.
+
+The rule of thumb adopted: **any fixed set of values the domain owns is an enum, and the
+DTO/boundary layer carries it as the enum type; only genuinely free-form text is `String`.**
 
 ## Files changed
 - `domain/engine/StepResult.java` (new enum)
