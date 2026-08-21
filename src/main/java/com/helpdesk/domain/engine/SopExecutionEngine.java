@@ -1,6 +1,7 @@
 package com.helpdesk.domain.engine;
 
 import com.helpdesk.domain.model.ConversationStatus;
+import com.helpdesk.domain.model.TerminalKind;
 import com.helpdesk.web.dto.SopResponse;
 
 import java.util.ArrayList;
@@ -58,10 +59,10 @@ public class SopExecutionEngine {
             return finish(current, ConversationStatus.ESCALATED, executed);
         }
         if (current != null && current.terminal()) {
-            if (current.terminalKind() == com.helpdesk.domain.model.TerminalKind.RESOLVE) {
+            if (current.terminalKind() == TerminalKind.RESOLVE) {
                 return finish(current, ConversationStatus.RESOLVED, executed);
             }
-            if (current.terminalKind() == com.helpdesk.domain.model.TerminalKind.ESCALATE) {
+            if (current.terminalKind() == TerminalKind.ESCALATE) {
                 return finish(current, ConversationStatus.ESCALATED, executed);
             }
         }
@@ -76,10 +77,10 @@ public class SopExecutionEngine {
 
         // 3) Entering a terminal step ends the conversation per that step's kind.
         if (next.terminal()) {
-            if (next.terminalKind() == com.helpdesk.domain.model.TerminalKind.RESOLVE) {
+            if (next.terminalKind() == TerminalKind.RESOLVE) {
                 return finish(next, ConversationStatus.RESOLVED, executed);
             }
-            if (next.terminalKind() == com.helpdesk.domain.model.TerminalKind.ESCALATE) {
+            if (next.terminalKind() == TerminalKind.ESCALATE) {
                 return finish(next, ConversationStatus.ESCALATED, executed);
             }
         }

@@ -3,6 +3,9 @@ package com.helpdesk.domain.retrieval;
 import com.helpdesk.application.SopService;
 import com.helpdesk.domain.model.Sop;
 import com.helpdesk.web.dto.SopRequest;
+import com.helpdesk.web.dto.SopStepType;
+import com.helpdesk.web.dto.SopTerminalKind;
+import com.helpdesk.web.dto.StepRequest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -23,11 +26,11 @@ class LexicalSopRetrieverTest {
     @Autowired SopService sopService;
 
     private SopRequest stepDef(String id, String title, String problem, List<String> symptoms) {
-        return new com.helpdesk.web.dto.SopRequest(
+        return new SopRequest(
                 id, title, "desc", "IT",
                 problem, symptoms, List.of(), "e", "f", "esc",
-                List.of(new com.helpdesk.web.dto.StepRequest("1", 1, "x", com.helpdesk.web.dto.SopStepType.QUESTION, "2", false, null, List.of()),
-                        new com.helpdesk.web.dto.StepRequest("2", 2, "done", com.helpdesk.web.dto.SopStepType.ESCALATE, null, true, com.helpdesk.web.dto.SopTerminalKind.ESCALATE, List.of()))
+                List.of(new StepRequest("1", 1, "x", SopStepType.QUESTION, "2", false, null, List.of()),
+                        new StepRequest("2", 2, "done", SopStepType.ESCALATE, null, true, SopTerminalKind.ESCALATE, List.of()))
         );
     }
 

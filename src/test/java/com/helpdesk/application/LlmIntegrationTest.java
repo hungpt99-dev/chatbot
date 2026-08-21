@@ -1,5 +1,6 @@
 package com.helpdesk.application;
 
+import com.helpdesk.domain.engine.ConversationSnapshot;
 import com.helpdesk.domain.engine.LlmPort;
 import com.helpdesk.domain.engine.LlmStepDecision;
 import com.helpdesk.domain.model.ConversationStatus;
@@ -78,7 +79,7 @@ class LlmIntegrationTest {
         // LLM resolves only when the current step is 2 (its defaultNext is the terminal
         // RESOLVE step 3); otherwise CONTINUE.
         when(llmPort.decide(any(), anyString())).thenAnswer(inv -> {
-            var snap = inv.getArgument(0, com.helpdesk.domain.engine.ConversationSnapshot.class);
+            var snap = inv.getArgument(0, ConversationSnapshot.class);
             boolean atStep2 = "2".equals(snap.currentStep().stepKey());
             return atStep2
                     ? new LlmStepDecision("RESOLVE", null, "in được rồi", null, "Tuyệt vời, đã xong")
@@ -110,7 +111,7 @@ class LlmIntegrationTest {
     void llmDrivesEscalationWithReason() {
         when(llmPort.isConfigured()).thenReturn(true);
         when(llmPort.decide(any(), anyString())).thenAnswer(inv -> {
-            var snap = inv.getArgument(0, com.helpdesk.domain.engine.ConversationSnapshot.class);
+            var snap = inv.getArgument(0, ConversationSnapshot.class);
             boolean atStep2 = "2".equals(snap.currentStep().stepKey());
             return atStep2
                     ? new LlmStepDecision("ESCALATE", null, null, "vẫn kẹt giấy sau khi thử", null)

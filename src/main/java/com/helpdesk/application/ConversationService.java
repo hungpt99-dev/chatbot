@@ -21,8 +21,11 @@ import com.helpdesk.domain.repository.AuditEventRepository;
 import com.helpdesk.domain.repository.ConversationMessageRepository;
 import com.helpdesk.domain.repository.ConversationRepository;
 import com.helpdesk.domain.repository.SupportCaseRepository;
+import com.helpdesk.web.dto.CaseDetail;
+import com.helpdesk.web.dto.CaseSummary;
 import com.helpdesk.web.dto.ConversationRequest;
 import com.helpdesk.web.dto.ConversationResponse;
+import com.helpdesk.web.dto.MessageDto;
 import com.helpdesk.web.dto.MessageRequest;
 import com.helpdesk.web.dto.SopResponse;
 import com.helpdesk.web.dto.StepResultDto;
@@ -191,20 +194,20 @@ public class ConversationService {
         return ConversationResponse.from(conv, SopResponse.from(sop), messagesOf(conv.getId()));
     }
 
-    public List<com.helpdesk.web.dto.CaseSummary> listCases(String status) {
+    public List<CaseSummary> listCases(String status) {
         List<SupportCase> cases;
         if (status == null || status.isBlank()) {
             cases = caseRepository.findAllByOrderByStartedAtDesc();
         } else {
             cases = caseRepository.findByStatusOrderByStartedAtDesc(ConversationStatus.valueOf(status.toUpperCase()));
         }
-        return cases.stream().map(com.helpdesk.web.dto.CaseSummary::from).toList();
+        return cases.stream().map(CaseSummary::from).toList();
     }
 
-    public com.helpdesk.web.dto.CaseDetail getCase(String reference) {
+    public CaseDetail getCase(String reference) {
         SupportCase c = caseRepository.findByReference(reference);
         if (c == null) throw new com.helpdesk.web.CaseNotFoundException(reference);
-        return com.helpdesk.web.dto.CaseDetail.from(c);
+        return CaseDetail.from(c);
     }
 
     // ---- internals ----
@@ -252,9 +255,9 @@ public class ConversationService {
         messageRepository.save(m);
     }
 
-    private List<com.helpdesk.web.dto.MessageDto> messagesOf(Long conversationId) {
+    private List<MessageDto> messagesOf(Long conversationId) {
         return messageRepository.findByConversationIdOrderBySeqAsc(conversationId).stream()
-                .map(m -> new com.helpdesk.web.dto.MessageDto(
+                .map(m -> new MessageDto(
                         m.getSeq(), m.getRole(), m.getKind(),
                         m.getContent(), m.getStepKey(), m.getCreatedAt()))
                 .toList();
