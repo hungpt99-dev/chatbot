@@ -1,4 +1,4 @@
-package com.helpdesk.web;
+package com.helpdesk.web.exception;
 
 public class SopNotFoundException extends RuntimeException {
     private final String id;

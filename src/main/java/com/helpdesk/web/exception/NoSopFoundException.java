@@ -1,4 +1,4 @@
-package com.helpdesk.web;
+package com.helpdesk.web.exception;
 
 /** Thrown when SOP retrieval finds no candidate for a problem statement. */
 public class NoSopFoundException extends RuntimeException {

@@ -1,4 +1,4 @@
-package com.helpdesk.web;
+package com.helpdesk.web.exception;
 
 /** Thrown when creating a hotel whose id already exists. */
 public class DuplicateHotelException extends RuntimeException {

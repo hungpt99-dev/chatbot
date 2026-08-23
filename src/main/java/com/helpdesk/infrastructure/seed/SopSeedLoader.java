@@ -84,7 +84,7 @@ public class SopSeedLoader {
                     if (req == null) continue;
                     sopService.create(hotel.getId(), req); // throws DuplicateSopException if exists
                     seededSops++;
-                } catch (com.helpdesk.web.DuplicateSopException dup) {
+                } catch (com.helpdesk.web.exception.DuplicateSopException dup) {
                     // already seeded for this hotel — idempotent
                 } catch (Exception e) {
                     log.warn("Failed to seed SOP {} for hotel {}: {}", f, hotel.getId(), e.getMessage());

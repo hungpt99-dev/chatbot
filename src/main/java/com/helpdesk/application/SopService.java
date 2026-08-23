@@ -6,7 +6,7 @@ import com.helpdesk.domain.repository.SopRepository;
 import com.helpdesk.domain.retrieval.LexicalOrVectorRetrievalStrategy;
 import com.helpdesk.domain.retrieval.LexicalSopRetriever;
 import com.helpdesk.domain.retrieval.RetrievalResult;
-import com.helpdesk.web.SopNotFoundException;
+import com.helpdesk.web.exception.SopNotFoundException;
 import com.helpdesk.web.dto.SopRequest;
 import com.helpdesk.web.dto.SopResponse;
 import com.helpdesk.web.dto.SopSummary;
@@ -47,7 +47,7 @@ public class SopService {
     @Transactional
     public SopResponse create(String hotelId, SopRequest req) {
         if (sopRepository.existsByHotelIdAndCode(hotelId, req.id())) {
-            throw new com.helpdesk.web.DuplicateSopException(hotelId + ":" + req.id());
+            throw new com.helpdesk.web.exception.DuplicateSopException(hotelId + ":" + req.id());
         }
         Sop saved = sopRepository.save(SopAssembler.toEntity(req, hotelId));
         return SopResponse.from(saved);

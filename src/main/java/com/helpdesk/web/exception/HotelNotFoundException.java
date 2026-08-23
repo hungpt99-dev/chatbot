@@ -1,4 +1,4 @@
-package com.helpdesk.web;
+package com.helpdesk.web.exception;
 
 /** Thrown when a hotel admin operation targets a hotel that does not exist. */
 public class HotelNotFoundException extends RuntimeException {

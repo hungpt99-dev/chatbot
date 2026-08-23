@@ -1,4 +1,4 @@
-package com.helpdesk.web;
+package com.helpdesk.web.exception;
 
 /** Thrown when a hotel cannot be deleted because it still owns SOPs/conversations. */
 public class HotelInUseException extends RuntimeException {

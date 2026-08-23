@@ -9,6 +9,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import com.helpdesk.web.exception.HotelNotFoundException;
+import com.helpdesk.web.exception.DuplicateHotelException;
+import com.helpdesk.web.exception.HotelInUseException;
 
 @RestController
 @RequestMapping("/api/hotels")

@@ -124,7 +124,7 @@ class ConversationFlowTest {
                         new StepResultDto(StepResult.ESCALATE, "flow-printer3", "1", null,
                                 "đã thử nhưng không được")));
 
-        assertThrows(com.helpdesk.web.ConversationClosedException.class, () ->
+        assertThrows(com.helpdesk.web.exception.ConversationClosedException.class, () ->
                 conversationService.sendMessage(conv.id(),
                         new MessageRequest("thêm câu hỏi", null, null)));
     }
@@ -146,7 +146,7 @@ class ConversationFlowTest {
 
     @Test
     void noMatchingSopRejected() {
-        assertThrows(com.helpdesk.web.NoSopFoundException.class, () ->
+        assertThrows(com.helpdesk.web.exception.NoSopFoundException.class, () ->
                 conversationService.create(new ConversationRequest(HOTEL, "eve", "tàu hỏa trễ giờ")));
     }
 }

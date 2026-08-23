@@ -1,4 +1,4 @@
-package com.helpdesk.web;
+package com.helpdesk.web.exception;
 
 /** Thrown when a support case reference does not exist. */
 public class CaseNotFoundException extends RuntimeException {

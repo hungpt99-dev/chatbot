@@ -1,4 +1,4 @@
-package com.helpdesk.web;
+package com.helpdesk.web.exception;
 
 /** Thrown when a conversation id does not exist. */
 public class ConversationNotFoundException extends RuntimeException {

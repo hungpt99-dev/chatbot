@@ -8,6 +8,9 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import com.helpdesk.web.exception.NoSopFoundException;
+import com.helpdesk.web.exception.ConversationNotFoundException;
+import com.helpdesk.web.exception.ConversationClosedException;
 
 @RestController
 @RequestMapping("/api/conversations")
