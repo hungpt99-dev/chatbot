@@ -36,6 +36,15 @@ helpdesk:
       return intent ESCALATE with a reason. Keep replies concise and in the
       employee's language.
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,metrics,info
+  endpoint:
+    health:
+      show-details: always
+
 server:
   port: 8080
 
