@@ -23,6 +23,8 @@ import static org.junit.jupiter.api.Assertions.*;
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 class LexicalSopRetrieverTest {
 
+    private static final String HOTEL = "test-hotel";
+
     @Autowired SopService sopService;
 
     private SopRequest stepDef(String id, String title, String problem, List<String> symptoms) {
@@ -36,34 +38,34 @@ class LexicalSopRetrieverTest {
 
     @Test
     void retrievesPrinterSopForVietnameseQuery() {
-        sopService.create(stepDef("ret-1", "Printer cannot print", "máy in không in được", List.of("không in được", "máy in", "paper jam")));
-        sopService.create(stepDef("ret-2", "WiFi cannot connect", "không kết nối wifi", List.of("wifi", "sai mật khẩu")));
+        sopService.create(HOTEL, stepDef("ret-1", "Printer cannot print", "máy in không in được", List.of("không in được", "máy in", "paper jam")));
+        sopService.create(HOTEL, stepDef("ret-2", "WiFi cannot connect", "không kết nối wifi", List.of("wifi", "sai mật khẩu")));
 
-        var res = sopService.retrieve("Máy in không in được");
+        var res = sopService.retrieve(HOTEL, "Máy in không in được");
         assertFalse(res.isEmpty());
-        assertEquals("ret-1", res.candidates().get(0).getId());
+        assertEquals("ret-1", res.candidates().get(0).getCode());
     }
 
     @Test
     void retrievesWifiSopForEnglishQuery() {
-        sopService.create(stepDef("ret-3", "Printer cannot print", "printer issue", List.of("printer", "paper jam")));
-        sopService.create(stepDef("ret-4", "WiFi cannot connect", "wifi issue", List.of("wifi", "cannot connect")));
+        sopService.create(HOTEL, stepDef("ret-3", "Printer cannot print", "printer issue", List.of("printer", "paper jam")));
+        sopService.create(HOTEL, stepDef("ret-4", "WiFi cannot connect", "wifi issue", List.of("wifi", "cannot connect")));
 
-        var res = sopService.retrieve("I cannot connect to wifi");
+        var res = sopService.retrieve(HOTEL, "I cannot connect to wifi");
         assertFalse(res.isEmpty());
-        assertEquals("ret-4", res.candidates().get(0).getId());
+        assertEquals("ret-4", res.candidates().get(0).getCode());
     }
 
     @Test
     void noMatchForUnrelatedQuery() {
-        sopService.create(stepDef("ret-5", "Printer cannot print", "printer", List.of("printer")));
-        var res = sopService.retrieve("cho tôi công thức nấu phở");
+        sopService.create(HOTEL, stepDef("ret-5", "Printer cannot print", "printer", List.of("printer")));
+        var res = sopService.retrieve(HOTEL, "cho tôi công thức nấu phở");
         assertTrue(res.isEmpty());
     }
 
     @Test
     void emptyQueryReturnsEmpty() {
-        var res = sopService.retrieve("");
+        var res = sopService.retrieve(HOTEL, "");
         assertTrue(res.isEmpty());
     }
 }

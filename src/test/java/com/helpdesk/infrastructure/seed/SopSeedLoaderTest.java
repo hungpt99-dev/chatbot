@@ -22,14 +22,14 @@ class SopSeedLoaderTest {
 
     @Test
     void eightSeedSopsLoad() {
-        List<?> all = sopService.list(null);
+        List<?> all = sopService.list("grand-hotel-saigon", null);
         assertTrue(all.size() >= 8, "expected at least 8 seeded SOPs, got " + all.size());
     }
 
     @Test
     void printerSopRetrievableInVietnamese() {
-        var res = sopService.retrieve("Máy in không in được");
+        var res = sopService.retrieve("grand-hotel-saigon", "Máy in không in được");
         assertFalse(res.isEmpty());
-        assertEquals("printer-cannot-print", res.candidates().get(0).getId());
+        assertEquals("printer-cannot-print", res.candidates().get(0).getCode());
     }
 }

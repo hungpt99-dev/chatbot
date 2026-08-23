@@ -64,7 +64,7 @@ public record SopResponse(
                 ))
                 .collect(Collectors.toList());
         return new SopResponse(
-                sop.getId(), sop.getTitle(), sop.getDescription(), sop.getCategory(),
+                sop.getCode(), sop.getTitle(), sop.getDescription(), sop.getCategory(),
                 sop.getProblemDescription(), sop.getSymptoms(), sop.getPrerequisites(),
                 sop.getExpectedResult(), sop.getFailureCondition(), sop.getEscalationCondition(),
                 sop.getVersion(), sop.getCreatedAt(), sop.getUpdatedAt(), stepDtos

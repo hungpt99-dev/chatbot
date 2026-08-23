@@ -32,6 +32,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 class ConversationApiTest {
 
+    private static final String HOTEL = "test-hotel";
+
     @Autowired MockMvc mockMvc;
     @Autowired ObjectMapper objectMapper;
     @Autowired SopService sopService;
@@ -43,14 +45,14 @@ class ConversationApiTest {
                 List.of(
                         new StepRequest("1", 1, "Bật nguồn?", SopStepType.QUESTION, "2", false, null, List.of()),
                         new StepRequest("2", 2, "In thử", SopStepType.CHECK, null, true, SopTerminalKind.RESOLVE, List.of())));
-        sopService.create(req);
+        sopService.create(HOTEL, req);
     }
 
     @Test
     void createConversationThenResolveThenCaseAppears() throws Exception {
         seed();
         String createJson = """
-                {"employee":"amy","problem":"máy in không in được"}""";
+                {"hotelId":"test-hotel","employee":"amy","problem":"máy in không in được"}""";
         String body = mockMvc.perform(post("/api/conversations").contentType(MediaType.APPLICATION_JSON).content(createJson))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.sopId").value("api-printer"))
@@ -78,7 +80,7 @@ class ConversationApiTest {
     @Test
     void noMatchingSopReturns422() throws Exception {
         String createJson = """
-                {"employee":"x","problem":"tàu hỏa trễ giờ"}""";
+                {"hotelId":"test-hotel","employee":"x","problem":"tàu hỏa trễ giờ"}""";
         mockMvc.perform(post("/api/conversations").contentType(MediaType.APPLICATION_JSON).content(createJson))
                 .andExpect(status().isUnprocessableEntity());
     }
@@ -87,7 +89,7 @@ class ConversationApiTest {
     void messageToClosedConversationReturns409() throws Exception {
         seed();
         String createJson = """
-                {"employee":"y","problem":"máy in không in được"}""";
+                {"hotelId":"test-hotel","employee":"y","problem":"máy in không in được"}""";
         String body = mockMvc.perform(post("/api/conversations").contentType(MediaType.APPLICATION_JSON).content(createJson))
                 .andExpect(status().isCreated()).andReturn().getResponse().getContentAsString();
         Long id = objectMapper.readTree(body).get("id").asLong();

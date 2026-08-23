@@ -1,0 +1,21 @@
+{
+  "id": "booking-sync-failure",
+  "title": "Booking / reservation sync failure (OTA / channel manager / PMS)",
+  "description": "Reservations from the website or OTAs (Booking.com, Expedia, Agoda) are not appearing in the PMS, or the PMS and channel manager disagree.",
+  "category": "Hotel IT / Reservations",
+  "problemDescription": "Booking không hiện trên PMS. Reservation sync failed, OTA booking missing in PMS, channel manager error.",
+  "symptoms": ["booking not in pms", "đồng bộ đặt phòng lỗi", "sync failed", "ota missing", "channel manager error", "reservation mismatch"],
+  "prerequisites": ["Employee can access the channel manager / PMS", "Employee has the reservation reference"],
+  "expectedResult": "Reservations appear correctly in the PMS and match the OTA.",
+  "failureCondition": "After all steps reservations still do not sync or mismatch persists.",
+  "escalationCondition": "Integration/credential fault suspected or steps exhausted without resolution.",
+  "steps": [
+    {"stepKey": "1", "stepOrder": 1, "instruction": "Confirm the scope: are ALL channels failing, or just one OTA?", "type": "QUESTION", "defaultNext": "2", "branches": [{"branchKey": "all_fail", "conditionText": "all channels failing", "gotoStepKey": "2b"}, {"branchKey": "one_fail", "conditionText": "only one OTA", "gotoStepKey": "2c"}]},
+    {"stepKey": "2b", "stepOrder": 2, "instruction": "Check the channel manager connection status and the PMS interface (e.g. interface service running). Restart the interface if red.", "type": "ACTION", "defaultNext": "3"},
+    {"stepKey": "2c", "stepOrder": 3, "instruction": "Check that OTA's mapping/credentials in the channel manager; re-authorize if expired.", "type": "ACTION", "defaultNext": "3"},
+    {"stepKey": "3", "stepOrder": 4, "instruction": "Trigger a manual sync/pull for the affected channel. Did the reservation appear in the PMS?", "type": "CHECK", "defaultNext": "7", "branches": [{"branchKey": "appeared", "conditionText": "reservation now in PMS", "gotoStepKey": "7"}]},
+    {"stepKey": "7", "stepOrder": 5, "instruction": "Great — verify the guest details match the OTA and confirm with front desk.", "type": "CHECK", "defaultNext": "9", "branches": [{"branchKey": "ok", "conditionText": "matches / resolved", "gotoStepKey": "9"}]},
+    {"stepKey": "9", "stepOrder": 6, "instruction": "", "type": "ESCALATE", "terminal": true, "terminalKind": "RESOLVE"},
+    {"stepKey": "8", "stepOrder": 7, "instruction": "", "type": "ESCALATE", "terminal": true, "terminalKind": "ESCALATE"}
+  ]
+}

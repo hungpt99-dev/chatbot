@@ -29,7 +29,7 @@ class UiSmokeTest {
         String body = r.getBody();
         assertNotNull(body);
         assertTrue(body.contains("<!DOCTYPE html>") || body.toLowerCase().contains("<html"));
-        assertTrue(body.contains("AI SOP Helpdesk"));
+        assertTrue(body.contains("Hotel IT Assistant"));
     }
 
     @Test

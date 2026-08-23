@@ -9,6 +9,7 @@ import java.time.Instant;
 public record CaseDetail(
         String reference,
         Long conversationId,
+        String hotelId,
         String employee,
         String problem,
         String sopId,
@@ -22,7 +23,7 @@ public record CaseDetail(
 ) {
     public static CaseDetail from(SupportCase c) {
         return new CaseDetail(
-                c.getReference(), c.getConversationId(), c.getEmployee(), c.getProblem(),
+                c.getReference(), c.getConversationId(), c.getHotelId(), c.getEmployee(), c.getProblem(),
                 c.getSopId(), c.getSopTitle(), c.getStatus(), c.getFailedStepKey(),
                 c.getEscalationReason(), c.getStartedAt(), c.getResolvedAt(), c.getEscalatedAt());
     }

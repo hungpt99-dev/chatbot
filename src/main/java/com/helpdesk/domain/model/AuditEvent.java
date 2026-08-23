@@ -20,6 +20,9 @@ public class AuditEvent {
     @Column(name = "conversation_id")
     private Long conversationId;
 
+    @Column(name = "hotel_id")
+    private String hotelId;
+
     @Column(name = "sop_id")
     private String sopId;
 
@@ -51,8 +54,20 @@ public class AuditEvent {
         this.detail = detail;
     }
 
+    public AuditEvent(String hotelId, Long conversationId, String sopId, String stepKey,
+                      String eventType, String detail) {
+        this.hotelId = hotelId;
+        this.conversationId = conversationId;
+        this.sopId = sopId;
+        this.stepKey = stepKey;
+        this.eventType = eventType;
+        this.detail = detail;
+    }
+
     public Long getId() { return id; }
     public Long getConversationId() { return conversationId; }
+    public String getHotelId() { return hotelId; }
+    public void setHotelId(String hotelId) { this.hotelId = hotelId; }
     public String getSopId() { return sopId; }
     public String getStepKey() { return stepKey; }
     public String getEventType() { return eventType; }

@@ -22,6 +22,9 @@ public class SupportCase {
     @Column(name = "conversation_id", nullable = false)
     private Long conversationId;
 
+    @Column(name = "hotel_id")
+    private String hotelId;
+
     @Column(name = "employee", length = 256)
     private String employee;
 
@@ -60,6 +63,8 @@ public class SupportCase {
     public void setReference(String reference) { this.reference = reference; }
     public Long getConversationId() { return conversationId; }
     public void setConversationId(Long conversationId) { this.conversationId = conversationId; }
+    public String getHotelId() { return hotelId; }
+    public void setHotelId(String hotelId) { this.hotelId = hotelId; }
     public String getEmployee() { return employee; }
     public void setEmployee(String employee) { this.employee = employee; }
     public String getProblem() { return problem; }

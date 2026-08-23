@@ -1,10 +1,8 @@
 package com.helpdesk.web.dto;
 
-/**
- * Inbound request to start a conversation. The problem text drives SOP retrieval;
- * the engine then begins at the SOP's first step.
- */
+/** Inbound request to start a conversation. hotelId scopes retrieval + ownership. */
 public record ConversationRequest(
+        String hotelId,
         String employee,
         String problem
 ) {}

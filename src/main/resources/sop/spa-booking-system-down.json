@@ -1,0 +1,20 @@
+{
+  "id": "spa-booking-system-down",
+  "title": "Spa booking system down (Seaside Resort Danang)",
+  "description": "The property's spa reservation system is unreachable; guests cannot be booked for treatments.",
+  "category": "Hotel IT / Spa (Seaside Resort)",
+  "problemDescription": "Hệ thống đặt spa không truy cập được. Spa booking app offline, cannot load appointments.",
+  "symptoms": ["spa system down", "hệ thống spa lỗi", "cannot open spa booking", "spa app offline"],
+  "prerequisites": ["Employee is at the spa reception", "Employee can see the spa booking terminal"],
+  "expectedResult": "Spa booking system is reachable and appointments can be created.",
+  "failureCondition": "After all steps the spa system remains unreachable.",
+  "escalationCondition": "Suspected network/app fault or steps exhausted without resolution.",
+  "steps": [
+    {"stepKey": "1", "stepOrder": 1, "instruction": "Is the spa terminal powered on and showing the booking app (not a network error)?", "type": "QUESTION", "defaultNext": "2", "branches": [{"branchKey": "error", "conditionText": "app error / cannot load", "gotoStepKey": "2b"}]},
+    {"stepKey": "2b", "stepOrder": 2, "instruction": "Check the terminal's network/Wi-Fi and restart the spa booking app. Does it load now?", "type": "ACTION", "defaultNext": "2"},
+    {"stepKey": "2", "stepOrder": 3, "instruction": "Try creating a test appointment. Does it save?", "type": "CHECK", "defaultNext": "7", "branches": [{"branchKey": "saved", "conditionText": "appointment saved", "gotoStepKey": "7"}]},
+    {"stepKey": "7", "stepOrder": 4, "instruction": "Great — the spa system is back. Continue with the guest's booking.", "type": "CHECK", "defaultNext": "9", "branches": [{"branchKey": "ok", "conditionText": "working", "gotoStepKey": "9"}]},
+    {"stepKey": "9", "stepOrder": 5, "instruction": "", "type": "ESCALATE", "terminal": true, "terminalKind": "RESOLVE"},
+    {"stepKey": "8", "stepOrder": 6, "instruction": "", "type": "ESCALATE", "terminal": true, "terminalKind": "ESCALATE"}
+  ]
+}

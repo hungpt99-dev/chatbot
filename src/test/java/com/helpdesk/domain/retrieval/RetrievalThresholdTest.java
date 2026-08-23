@@ -24,6 +24,8 @@ import static org.junit.jupiter.api.Assertions.*;
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 class RetrievalThresholdTest {
 
+    private static final String HOTEL = "test-hotel";
+
     @Autowired SopService sopService;
 
     private SopRequest sop(String id, String title, String problem, List<String> symptoms) {
@@ -38,27 +40,27 @@ class RetrievalThresholdTest {
     @Test
     void bestCandidateAlwaysReturnedAndNoisePruned() {
         // Strongly printer-related SOP plus a weakly-related one (shares generic words).
-        sopService.create(sop("th-1", "Printer cannot print", "máy in không in được giấy",
+        sopService.create(HOTEL, sop("th-1", "Printer cannot print", "máy in không in được giấy",
                 List.of("máy in", "không in được", "paper jam", "kẹt giấy")));
-        sopService.create(sop("th-2", "Monitor not working", "màn hình không lên",
+        sopService.create(HOTEL, sop("th-2", "Monitor not working", "màn hình không lên",
                 List.of("màn hình", "không sáng")));
 
-        var res = sopService.retrieve("Máy in không in được");
+        var res = sopService.retrieve(HOTEL, "Máy in không in được");
         assertFalse(res.isEmpty());
-        assertEquals("th-1", res.candidates().get(0).getId());
+        assertEquals("th-1", res.candidates().get(0).getCode());
         // The weakly-related monitor SOP should be pruned (score far below 50% of best).
-        assertTrue(res.candidates().stream().noneMatch(s -> s.getId().equals("th-2")),
+        assertTrue(res.candidates().stream().noneMatch(s -> s.getCode().equals("th-2")),
                 "weakly-related SOP should be filtered out");
     }
 
     @Test
     void genuineTieBothReturned() {
-        sopService.create(sop("th-3", "Password reset A", "quên mật khẩu tài khoản",
+        sopService.create(HOTEL, sop("th-3", "Password reset A", "quên mật khẩu tài khoản",
                 List.of("quên mật khẩu", "đổi mật khẩu")));
-        sopService.create(sop("th-4", "Password reset B", "quên mật khẩu đăng nhập",
+        sopService.create(HOTEL, sop("th-4", "Password reset B", "quên mật khẩu đăng nhập",
                 List.of("quên mật khẩu", "đăng nhập")));
 
-        var res = sopService.retrieve("quên mật khẩu");
+        var res = sopService.retrieve(HOTEL, "quên mật khẩu");
         assertTrue(res.candidates().size() >= 2);
     }
 }

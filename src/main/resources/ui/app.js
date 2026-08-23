@@ -90,12 +90,14 @@ function addSystem(text) {
 async function startConversation(e) {
   e.preventDefault();
   $('start-error').textContent = '';
+  const hotelId = $('hotel').value;
   const employee = $('employee').value.trim();
   const problem = $('problem').value.trim();
+  if (!hotelId) { $('start-error').textContent = 'Please select a hotel.'; return; }
   if (!problem) { $('start-error').textContent = 'Please describe the problem.'; return; }
   $('start-btn').disabled = true;
   try {
-    const conv = await api('POST', '/conversations', { employee: employee || 'employee', problem });
+    const conv = await api('POST', '/conversations', { hotelId, employee: employee || 'employee', problem });
     renderConv(conv);
     loadCases();
   } catch (err) {
@@ -155,11 +157,29 @@ function friendlyError(err) {
 /* ---------------- Operator board ---------------- */
 
 async function loadCases() {
+  const hotelId = $('hotel').value;
   const status = $('status-filter').value;
-  const qs = status ? `?status=${encodeURIComponent(status)}` : '';
+  const qs = new URLSearchParams();
+  if (hotelId) qs.set('hotelId', hotelId);
+  if (status) qs.set('status', status);
   try {
-    const cases = await api('GET', '/cases' + qs);
+    const cases = await api('GET', '/cases' + (qs.toString() ? '?' + qs.toString() : ''));
     renderCaseList(cases || []);
+  } catch (_) { /* non-fatal */ }
+}
+
+async function loadHotels() {
+  try {
+    const hotels = await api('GET', '/hotels');
+    const sel = $('hotel');
+    sel.innerHTML = '';
+    (hotels || []).forEach((h) => {
+      const opt = document.createElement('option');
+      opt.value = h.id;
+      opt.textContent = h.name || h.id;
+      sel.appendChild(opt);
+    });
+    if (sel.options.length) sel.selectedIndex = 0;
   } catch (_) { /* non-fatal */ }
 }
 
@@ -223,4 +243,4 @@ $('msg-form').addEventListener('submit', sendMessage);
 $('refresh-btn').addEventListener('click', loadCases);
 $('status-filter').addEventListener('change', loadCases);
 detectMode();
-loadCases();
+loadHotels().then(loadCases);

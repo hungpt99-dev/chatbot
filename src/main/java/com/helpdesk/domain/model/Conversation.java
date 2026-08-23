@@ -16,6 +16,9 @@ public class Conversation {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "hotel_id")
+    private String hotelId;
+
     @Column(name = "sop_id")
     private String sopId;
 
@@ -71,6 +74,8 @@ public class Conversation {
     }
 
     public Long getId() { return id; }
+    public String getHotelId() { return hotelId; }
+    public void setHotelId(String hotelId) { this.hotelId = hotelId; }
     public String getSopId() { return sopId; }
     public void setSopId(String sopId) { this.sopId = sopId; }
     public String getCurrentStepKey() { return currentStepKey; }

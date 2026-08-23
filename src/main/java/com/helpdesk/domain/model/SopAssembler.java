@@ -16,8 +16,11 @@ public final class SopAssembler {
 
     private SopAssembler() {}
 
-    public static Sop toEntity(SopRequest req) {
+    public static Sop toEntity(SopRequest req, String hotelId) {
         Sop sop = new Sop(req.id(), req.title());
+        sop.setHotelId(hotelId);
+        sop.setCode(req.id());
+        sop.setId(hotelId + ":" + req.id());
         applyScalars(req, sop);
         sop.setSteps(buildSteps(req, sop));
         return sop;
@@ -28,8 +31,11 @@ public final class SopAssembler {
      * Steps are cleared and replaced so orphan removal cleans up the old graph,
      * avoiding duplicate-key errors on the (id, step_key) unique constraint.
      */
-    public static void apply(SopRequest req, Sop existing) {
+    public static void apply(SopRequest req, Sop existing, String hotelId) {
         applyScalars(req, existing);
+        existing.setHotelId(hotelId);
+        existing.setCode(req.id());
+        existing.setId(hotelId + ":" + req.id());
         existing.getSteps().clear();
         existing.getSteps().addAll(buildSteps(req, existing));
     }

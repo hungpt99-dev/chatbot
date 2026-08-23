@@ -41,7 +41,38 @@ the hotel-specific failure modes the BRD lists plus the chain's daily load:
   engine, `LlmPort`, conversation/case/audit model, and escalation flow are
   unchanged — only the corpus and product framing change.
 
+## Decision 3 — Multi-tenant: per-hotel SOP instances, hotelId on every request
+The chain is a **group of hotels that are individually different but share common
+SOPs** ("design the database and code exactly to this requirement"). The data model
+is therefore multi-tenant:
+
+- A `hotel` table (properties in the chain) with `hotel_id`, `name`, region, etc.
+- `sop`, `conversation`, `support_case`, and `audit_event` all carry a `hotel_id`.
+- **SOP model = per-hotel instances (Q1 = B).** A corporate "shared" SOP is
+  replicated per hotel at seed time; each hotel owns its copy and may override or
+  localize it independently. There is no inheritance — a hotel's SOP is fully its
+  own row with `code` unique within `(hotel_id, code)`. The SOP primary key is the
+  composite `hotel_id + ":" + code` (`sop.id`), which keeps the PK stable across
+  H2 and Postgres without an `ALTER TABLE ... ALTER PRIMARY KEY`.
+- **Request routing = explicit `hotelId` (Q2 = A).** Every API call that scopes
+  data carries `hotelId` (query param for reads, body field on `ConversationRequest`
+  / SOP create). Retrieval, conversation ownership, cases, and audit are all scoped
+  by `hotelId`. This works with no auth today; when SSO/AD lands, it supplies the
+  `hotelId` from the user's property instead of the UI selector.
+
+- **Rationale:** "each hotel different but some shared" maps directly to per-hotel
+  SOP rows + a shared seed set, rather than a single global corpus or a complex
+  inheritance tree. Explicit `hotelId` is the simplest correct tenancy boundary and
+  avoids implicit session/threadlocal coupling.
+- **Consequence:** all repositories expose `findByHotelId*` queries; `SopService`,
+  `ConversationService`, and the controllers thread `hotelId` through; the UI has a
+  hotel selector whose choice is sent on every request. `SopResponse.id()` returns
+  the human `code` (composite `sop.id` is an internal key), so lookups use
+  `SopService.load(hotelId, code)`, never `loadById(code)`.
+
 ## Supersedes
 - BRD "Recommended Technology Stack → Frontend: React or Angular" is overridden by
   Decision 1.
 - PROPOSAL.md §1 (stack options) and §8 (generic seed SOPs) are updated to match.
+- The single-tenant assumption in early Phase 1A/B/C design notes is overridden by
+  Decision 3 (multi-tenant `hotel_id` on every entity).

@@ -18,6 +18,13 @@ public class Sop {
     @Column(name = "id")
     private String id;
 
+    @Column(name = "hotel_id", nullable = false, length = 64)
+    private String hotelId;
+
+    /** Human-readable SOP code (e.g. "printer-cannot-print"), unique within a hotel. */
+    @Column(name = "code", nullable = false, length = 64)
+    private String code;
+
     @Column(nullable = false)
     private String title;
 
@@ -81,6 +88,12 @@ public class Sop {
 
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
+
+    public String getHotelId() { return hotelId; }
+    public void setHotelId(String hotelId) { this.hotelId = hotelId; }
+
+    public String getCode() { return code; }
+    public void setCode(String code) { this.code = code; }
 
     public String getTitle() { return title; }
     public void setTitle(String title) { this.title = title; }

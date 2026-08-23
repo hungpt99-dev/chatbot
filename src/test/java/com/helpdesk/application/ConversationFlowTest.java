@@ -37,6 +37,8 @@ import static org.junit.jupiter.api.Assertions.*;
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 class ConversationFlowTest {
 
+    private static final String HOTEL = "test-hotel";
+
     @Autowired SopService sopService;
     @Autowired ConversationService conversationService;
     @Autowired ConversationRepository conversationRepository;
@@ -58,14 +60,14 @@ class ConversationFlowTest {
                                 false, null, List.of()),
                         new StepRequest("3", 3, "In thử", SopStepType.CHECK, null,
                                 true, SopTerminalKind.RESOLVE, List.of())));
-        return sopService.create(req);
+        return sopService.create(HOTEL, req);
     }
 
     @Test
     void happyPathResolvesAndCreatesResolvedCase() {
         buildSop("flow-printer");
         ConversationResponse conv = conversationService.create(
-                new ConversationRequest("alice", "máy in không in được"));
+                new ConversationRequest(HOTEL, "alice", "máy in không in được"));
 
         assertNotNull(conv.id());
         assertEquals("flow-printer", conv.sopId());
@@ -85,7 +87,7 @@ class ConversationFlowTest {
         assertNotNull(after2.resolvedAt());
 
         // Case created + resolved.
-        List<CaseSummary> cases = conversationService.listCases("RESOLVED");
+        List<CaseSummary> cases = conversationService.listCases(HOTEL, "RESOLVED");
         assertTrue(cases.stream().anyMatch(c -> c.conversationId().equals(conv.id())));
 
         // Audit trail present: STEP_SHOWN + STEP_RESULT events.
@@ -96,7 +98,7 @@ class ConversationFlowTest {
     void escalationPathCreatesEscalatedCaseWithFailedStep() {
         buildSop("flow-printer2");
         ConversationResponse conv = conversationService.create(
-                new ConversationRequest("bob", "máy in không in được"));
+                new ConversationRequest(HOTEL, "bob", "máy in không in được"));
 
         // User reports it still doesn't work -> escalate.
         ConversationResponse after = conversationService.sendMessage(conv.id(),
@@ -106,7 +108,7 @@ class ConversationFlowTest {
         assertEquals(ConversationStatus.ESCALATED, after.status());
         assertNotNull(after.escalatedAt());
 
-        List<CaseSummary> cases = conversationService.listCases("ESCALATED");
+        List<CaseSummary> cases = conversationService.listCases(HOTEL, "ESCALATED");
         CaseSummary c = cases.stream().filter(x -> x.conversationId().equals(conv.id())).findFirst().orElseThrow();
         assertEquals("1", c.failedStepKey());
         assertEquals("flow-printer2", c.sopId());
@@ -116,7 +118,7 @@ class ConversationFlowTest {
     void closedConversationRejectsFurtherMessages() {
         buildSop("flow-printer3");
         ConversationResponse conv = conversationService.create(
-                new ConversationRequest("carol", "máy in không in được"));
+                new ConversationRequest(HOTEL, "carol", "máy in không in được"));
         conversationService.sendMessage(conv.id(),
                 new MessageRequest("vẫn không được, bỏ cuộc", null,
                         new StepResultDto(StepResult.ESCALATE, "flow-printer3", "1", null,
@@ -131,7 +133,7 @@ class ConversationFlowTest {
     void messageAndConversationPersistAcrossLoads() {
         buildSop("flow-printer4");
         ConversationResponse conv = conversationService.create(
-                new ConversationRequest("dave", "máy in không in được"));
+                new ConversationRequest(HOTEL, "dave", "máy in không in được"));
         conversationService.sendMessage(conv.id(),
                 new MessageRequest("bật rồi", null, null));
 
@@ -145,6 +147,6 @@ class ConversationFlowTest {
     @Test
     void noMatchingSopRejected() {
         assertThrows(com.helpdesk.web.NoSopFoundException.class, () ->
-                conversationService.create(new ConversationRequest("eve", "tàu hỏa trễ giờ")));
+                conversationService.create(new ConversationRequest(HOTEL, "eve", "tàu hỏa trễ giờ")));
     }
 }

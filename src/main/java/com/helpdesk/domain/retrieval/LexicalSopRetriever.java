@@ -25,8 +25,8 @@ public class LexicalSopRetriever {
         this.sopRepository = sopRepository;
     }
 
-    public RetrievalResult retrieve(String problemText) {
-        List<Sop> all = sopRepository.findAll();
+    public RetrievalResult retrieve(String hotelId, String problemText) {
+        List<Sop> all = sopRepository.findByHotelId(hotelId);
         if (all.isEmpty()) {
             return new RetrievalResult(List.of());
         }

@@ -36,15 +36,9 @@ import java.time.Instant;
 import java.util.List;
 
 /**
- * Conversation use cases: create a conversation (triggers SOP retrieval +
- * starts execution), advance it with a user message + structured AI step
- * outcome, and read conversation/case state.
- *
- * <p>The service is deliberately provider-agnostic: the structured {@link StepOutcome}
- * is supplied by the caller (in Phase 1C the LLM produces it; offline, the
- * {@link OfflineInterpreter} does). The service NEVER lets the AI choose an
- * arbitrary step — routing is delegated to {@link SopExecutionEngine}, which is
- * the deterministic, auditable source of truth.
+ * Conversation use cases: create a conversation (triggers SOP retrieval scoped to
+ * the hotel + starts execution), advance it with a user message + structured AI
+ * step outcome, and read conversation/case state. Hotel-scoped (multi-tenant).
  */
 @Service
 public class ConversationService {
@@ -81,14 +75,16 @@ public class ConversationService {
 
     @Transactional
     public ConversationResponse create(ConversationRequest req) {
-        SopResponse retrieved = bestRetrieval(req.problem());
+        String hotelId = req.hotelId();
+        SopResponse retrieved = bestRetrieval(hotelId, req.problem());
         if (retrieved == null) {
             throw new com.helpdesk.web.NoSopFoundException(req.problem());
         }
-        Sop sop = sopService.load(retrieved.id());
+        Sop sop = sopService.load(hotelId, retrieved.id());
 
         Conversation conv = new Conversation();
-        conv.setSopId(sop.getId());
+        conv.setHotelId(hotelId);
+        conv.setSopId(sop.getCode());
         conv.setStatus(ConversationStatus.IN_PROGRESS);
         conv.setEmployee(req.employee());
         conv.setProblemSummary(req.problem());
@@ -96,12 +92,11 @@ public class ConversationService {
         conv.setLastUserMessage(req.problem());
         Conversation saved = conversationRepository.save(conv);
 
-        // Initial employee message + assistant's first step.
-        appendMessage(saved, MessageRole.USER, MessageKind.PROBLEM, req.problem(), retrieved.id(), saved.getCurrentStepKey(), null, null);
+        appendMessage(saved, MessageRole.USER, MessageKind.PROBLEM, req.problem(), sop.getCode(), saved.getCurrentStepKey(), null, null);
         SopResponse.StepDto first = SopResponse.from(sop).steps().get(0);
         String assistantText = composer.compose(new EngineResult(first, first.stepKey(), ConversationStatus.IN_PROGRESS.name(), List.of(), false), SopResponse.from(sop));
-        appendMessage(saved, MessageRole.ASSISTANT, MessageKind.QUESTION, assistantText, retrieved.id(), first.stepKey(), "TROUBLESHOOT", null);
-        auditRepository.save(new AuditEvent(saved.getId(), sop.getId(), first.stepKey(), "STEP_SHOWN", assistantText));
+        appendMessage(saved, MessageRole.ASSISTANT, MessageKind.QUESTION, assistantText, sop.getCode(), first.stepKey(), "TROUBLESHOOT", null);
+        auditRepository.save(new AuditEvent(hotelId, saved.getId(), sop.getCode(), first.stepKey(), "STEP_SHOWN", assistantText));
 
         saved.setLastAssistantMessage(assistantText);
         saved.setLastIntent("TROUBLESHOOT");
@@ -119,16 +114,14 @@ public class ConversationService {
             throw new com.helpdesk.web.ConversationClosedException(conversationId);
         }
 
-        Sop sop = sopService.load(conv.getSopId());
+        String hotelId = conv.getHotelId();
+        Sop sop = sopService.load(hotelId, conv.getSopId());
         SopResponse sopDto = SopResponse.from(sop);
         SopResponse.StepDto current = currentStep(sopDto, conv.getCurrentStepKey());
 
-        // Record the employee's reply.
-        appendMessage(conv, MessageRole.USER, MessageKind.ANSWER, req.message(), sop.getId(), conv.getCurrentStepKey(), null, null);
+        appendMessage(conv, MessageRole.USER, MessageKind.ANSWER, req.message(), sop.getCode(), conv.getCurrentStepKey(), null, null);
         conv.setLastUserMessage(req.message());
 
-        // Decide the outcome. Priority: explicit structured result from the caller
-        // (tests/curl) > LLM when configured > deterministic offline interpreter.
         StepOutcome outcome;
         if (req.stepResult() != null) {
             outcome = new StepOutcome(
@@ -140,14 +133,13 @@ public class ConversationService {
         } else if (llmPort.isConfigured()) {
             LlmStepDecision decision = llmPort.decide(snapshotFor(conv, sopDto, current), req.message());
             if (decision != null) {
-                // Guardrail: only trust a branchKey that is enumerated on the current step.
                 String branchKey = decision.hasBranch() && branchExists(current, decision.branchKey())
                         ? decision.branchKey() : null;
                 StepResult intent = StepResult.valueOf(
                         decision.intent() == null ? "CONTINUE" : decision.intent().toUpperCase());
                 outcome = new StepOutcome(branchKey, intent, decision.stepResult(),
                         req.message(), decision.escalationReason());
-                auditRepository.save(new AuditEvent(conv.getId(), sop.getId(), current.stepKey(),
+                auditRepository.save(new AuditEvent(hotelId, conv.getId(), sop.getCode(), current.stepKey(),
                         "LLM_DECISION", "intent=" + intent + "; branch=" + branchKey
                         + (decision.response() != null ? "; modelReply=" + decision.response() : "")));
             } else {
@@ -159,15 +151,13 @@ public class ConversationService {
 
         EngineResult result = engine.advance(sopDto, current, outcome);
 
-        // Persist the assistant's response + record step result.
         String assistantText = composer.compose(result, sopDto);
         appendMessage(conv, MessageRole.ASSISTANT, kindFor(result), assistantText,
-                sop.getId(), result.currentStepKey(), "TROUBLESHOOT", outcome.stepResult().name());
-        auditRepository.save(new AuditEvent(conv.getId(), sop.getId(), conv.getCurrentStepKey(),
+                sop.getCode(), result.currentStepKey(), "TROUBLESHOOT", outcome.stepResult().name());
+        auditRepository.save(new AuditEvent(hotelId, conv.getId(), sop.getCode(), conv.getCurrentStepKey(),
                 "STEP_RESULT", "stepResult=" + outcome.stepResult().name()
                         + (outcome.hasBranch() ? "; branch=" + outcome.branchKey() : "")));
 
-        // Update conversation state.
         conv.setCurrentStepKey(result.currentStepKey());
         conv.setStatus(ConversationStatus.valueOf(result.status()));
         conv.setLastAssistantMessage(assistantText);
@@ -181,7 +171,6 @@ public class ConversationService {
         }
         conversationRepository.save(conv);
 
-        // Derive / update the support case.
         upsertCase(conv, sop, result, outcome);
 
         return ConversationResponse.from(conv, sopDto, messagesOf(conv.getId()));
@@ -190,16 +179,20 @@ public class ConversationService {
     public ConversationResponse get(Long conversationId) {
         Conversation conv = conversationRepository.findById(conversationId)
                 .orElseThrow(() -> new com.helpdesk.web.ConversationNotFoundException(conversationId));
-        Sop sop = sopService.load(conv.getSopId());
+        Sop sop = sopService.load(conv.getHotelId(), conv.getSopId());
         return ConversationResponse.from(conv, SopResponse.from(sop), messagesOf(conv.getId()));
     }
 
-    public List<CaseSummary> listCases(String status) {
+    public List<CaseSummary> listCases(String hotelId, String status) {
         List<SupportCase> cases;
-        if (status == null || status.isBlank()) {
-            cases = caseRepository.findAllByOrderByStartedAtDesc();
+        if (hotelId == null || hotelId.isBlank()) {
+            cases = (status == null || status.isBlank())
+                    ? caseRepository.findAllByOrderByStartedAtDesc()
+                    : caseRepository.findByStatusOrderByStartedAtDesc(ConversationStatus.valueOf(status.toUpperCase()));
         } else {
-            cases = caseRepository.findByStatusOrderByStartedAtDesc(ConversationStatus.valueOf(status.toUpperCase()));
+            cases = (status == null || status.isBlank())
+                    ? caseRepository.findByHotelIdOrderByStartedAtDesc(hotelId)
+                    : caseRepository.findByHotelIdAndStatusOrderByStartedAtDesc(hotelId, ConversationStatus.valueOf(status.toUpperCase()));
         }
         return cases.stream().map(CaseSummary::from).toList();
     }
@@ -212,10 +205,10 @@ public class ConversationService {
 
     // ---- internals ----
 
-    private SopResponse bestRetrieval(String problem) {
-        var res = sopService.retrieve(problem);
+    private SopResponse bestRetrieval(String hotelId, String problem) {
+        var res = sopService.retrieve(hotelId, problem);
         if (res.candidates().isEmpty()) return null;
-        return SopResponse.from(sopService.load(res.candidates().get(0).getId()));
+        return SopResponse.from(sopService.loadById(res.candidates().get(0).getId()));
     }
 
     private SopResponse.StepDto currentStep(SopResponse sop, String key) {
@@ -272,9 +265,10 @@ public class ConversationService {
             sc.setReference("CASE-" + String.format("%06d", conv.getId()));
             sc.setStartedAt(conv.getStartedAt());
         }
+        sc.setHotelId(conv.getHotelId());
         sc.setEmployee(conv.getEmployee());
         sc.setProblem(conv.getProblemSummary());
-        sc.setSopId(sop.getId());
+        sc.setSopId(sop.getCode());
         sc.setSopTitle(sop.getTitle());
         sc.setStatus(ConversationStatus.valueOf(result.status()));
         if ("ESCALATED".equals(result.status())) {

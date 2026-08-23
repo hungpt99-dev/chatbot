@@ -1,7 +1,6 @@
 package com.helpdesk.web;
 
 import com.helpdesk.application.SopService;
-import com.helpdesk.domain.model.Sop;
 import com.helpdesk.domain.retrieval.RetrievalResult;
 import com.helpdesk.web.dto.SopRequest;
 import com.helpdesk.web.dto.SopResponse;
@@ -25,33 +24,34 @@ public class SopController {
     }
 
     @GetMapping
-    public List<SopSummary> list(@RequestParam(required = false) String category) {
-        return sopService.list(category);
+    public List<SopSummary> list(@RequestParam String hotelId,
+                                 @RequestParam(required = false) String category) {
+        return sopService.list(hotelId, category);
     }
 
-    @GetMapping("/{id}")
-    public SopResponse get(@PathVariable String id) {
-        return sopService.get(id);
+    @GetMapping("/{code}")
+    public SopResponse get(@RequestParam String hotelId, @PathVariable String code) {
+        return sopService.get(hotelId, code);
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public SopResponse create(@Valid @RequestBody SopRequest req) {
-        return sopService.create(req);
+    public SopResponse create(@RequestParam String hotelId,
+                              @Valid @RequestBody SopRequest req) {
+        return sopService.create(hotelId, req);
     }
 
-    @PutMapping("/{id}")
-    public SopResponse update(@PathVariable String id, @Valid @RequestBody SopRequest req) {
-        return sopService.update(id, req);
+    @PutMapping("/{code}")
+    public SopResponse update(@RequestParam String hotelId, @PathVariable String code,
+                              @Valid @RequestBody SopRequest req) {
+        return sopService.update(hotelId, code, req);
     }
 
-    /**
-     * Retrieval endpoint (Phase 1A lexical; later RAG). Pure read, no state change.
-     */
     @GetMapping("/search")
-    public List<SopSummary> search(@RequestParam("q") String query) {
-        return sopService.retrieve(query).candidates().stream()
-                .map(s -> new SopSummary(s.getId(), s.getTitle(), s.getCategory(), s.getDescription()))
+    public List<SopSummary> search(@RequestParam String hotelId,
+                                   @RequestParam("q") String query) {
+        return sopService.retrieve(hotelId, query).candidates().stream()
+                .map(s -> new SopSummary(s.getCode(), s.getTitle(), s.getCategory(), s.getDescription()))
                 .collect(Collectors.toList());
     }
 

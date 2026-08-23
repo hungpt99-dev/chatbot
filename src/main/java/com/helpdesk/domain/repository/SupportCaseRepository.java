@@ -14,6 +14,10 @@ public interface SupportCaseRepository extends JpaRepository<SupportCase, Long> 
 
     List<SupportCase> findAllByOrderByStartedAtDesc();
 
+    List<SupportCase> findByHotelIdOrderByStartedAtDesc(String hotelId);
+
+    List<SupportCase> findByHotelIdAndStatusOrderByStartedAtDesc(String hotelId, ConversationStatus status);
+
     SupportCase findByReference(String reference);
 
     SupportCase findByConversationId(Long conversationId);

@@ -20,8 +20,9 @@ public class CaseController {
     }
 
     @GetMapping
-    public List<CaseSummary> list(@RequestParam(required = false) String status) {
-        return conversationService.listCases(status);
+    public List<CaseSummary> list(@RequestParam(required = false) String hotelId,
+                                  @RequestParam(required = false) String status) {
+        return conversationService.listCases(hotelId, status);
     }
 
     @GetMapping("/{reference}")

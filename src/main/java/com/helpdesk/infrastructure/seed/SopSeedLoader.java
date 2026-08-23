@@ -1,6 +1,8 @@
 package com.helpdesk.infrastructure.seed;
 
 import com.helpdesk.application.SopService;
+import com.helpdesk.domain.model.Hotel;
+import com.helpdesk.domain.repository.HotelRepository;
 import com.helpdesk.web.dto.SopRequest;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
@@ -12,11 +14,15 @@ import org.springframework.stereotype.Component;
 
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
- * Seeds the 8 Phase 1A SOPs from JSON on startup (idempotent: existing SOP ids are
- * skipped). Gated by {@code helpdesk.seed.enabled} so tests can disable it.
+ * Seeds hotels and their SOPs on startup (idempotent). Multi-tenant (ADR-0008):
+ * each hotel owns its own SOP instances, so the shared corporate SOP set is
+ * replicated per hotel. A hotel may also have hotel-specific SOP files
+ * (keyed by hotel id) to reflect properties that differ.
  */
 @Component
 public class SopSeedLoader {
@@ -24,44 +30,68 @@ public class SopSeedLoader {
     private static final Logger log = LoggerFactory.getLogger(SopSeedLoader.class);
 
     private final SopService sopService;
+    private final HotelRepository hotelRepository;
     private final boolean enabled;
 
-    public SopSeedLoader(SopService sopService, org.springframework.core.env.Environment env) {
+    public SopSeedLoader(SopService sopService, HotelRepository hotelRepository,
+                         org.springframework.core.env.Environment env) {
         this.sopService = sopService;
+        this.hotelRepository = hotelRepository;
         this.enabled = "true".equalsIgnoreCase(env.getProperty("helpdesk.seed.enabled", "true"));
     }
+
+    /** Shared corporate SOP set, replicated for every hotel. */
+    private static final List<String> SHARED_SOPS = List.of(
+            "printer-cannot-print",
+            "computer-no-internet",
+            "wifi-cannot-connect",
+            "cannot-login",
+            "password-reset",
+            "email-cannot-send",
+            "vpn-cannot-connect",
+            "monitor-not-working",
+            "keycard-encoder-failure",
+            "pos-terminal-down",
+            "booking-sync-failure"
+    );
+
+    /** Hotels in the chain. id is also the SOP id prefix (hotelId:code). */
+    private static final List<Hotel> HOTELS = List.of(
+            new Hotel("grand-hotel-saigon", "Grand Hotel Saigon", "Ho Chi Minh City, VN"),
+            new Hotel("seaside-resort-danang", "Seaside Resort Danang", "Danang, VN")
+    );
+
+    /** Extra SOP files specific to one hotel (demonstrates per-property divergence). */
+    private static final Map<String, List<String>> HOTEL_SPECIFIC = Map.of(
+            "seaside-resort-danang", List.of("spa-booking-system-down")
+    );
 
     @EventListener(ApplicationReadyEvent.class)
     public void seed() {
         if (!enabled) {
             return;
         }
-        List<String> files = List.of(
-                "printer-cannot-print",
-                "computer-no-internet",
-                "wifi-cannot-connect",
-                "cannot-login",
-                "password-reset",
-                "email-cannot-send",
-                "vpn-cannot-connect",
-                "monitor-not-working"
-        );
-        int seeded = 0;
-        for (String f : files) {
-            try {
-                SopRequest req = read(f);
-                if (req == null) {
-                    continue;
+        int seededSops = 0;
+        for (Hotel hotel : HOTELS) {
+            if (!hotelRepository.existsById(hotel.getId())) {
+                hotelRepository.save(hotel);
+            }
+            List<String> files = new ArrayList<>(SHARED_SOPS);
+            files.addAll(HOTEL_SPECIFIC.getOrDefault(hotel.getId(), List.of()));
+            for (String f : files) {
+                try {
+                    SopRequest req = read(f);
+                    if (req == null) continue;
+                    sopService.create(hotel.getId(), req); // throws DuplicateSopException if exists
+                    seededSops++;
+                } catch (com.helpdesk.web.DuplicateSopException dup) {
+                    // already seeded for this hotel — idempotent
+                } catch (Exception e) {
+                    log.warn("Failed to seed SOP {} for hotel {}: {}", f, hotel.getId(), e.getMessage());
                 }
-                sopService.create(req); // create() throws DuplicateSopException if exists; catch below
-                seeded++;
-            } catch (com.helpdesk.web.DuplicateSopException dup) {
-                // already seeded — fine, idempotent
-            } catch (Exception e) {
-                log.warn("Failed to seed SOP {}: {}", f, e.getMessage());
             }
         }
-        log.info("SOP seed complete: {} new SOP(s) loaded.", seeded);
+        log.info("SOP seed complete: {} new SOP instance(s) loaded across {} hotels.", seededSops, HOTELS.size());
     }
 
     private SopRequest read(String name) {

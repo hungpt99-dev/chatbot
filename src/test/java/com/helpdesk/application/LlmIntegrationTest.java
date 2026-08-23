@@ -38,6 +38,8 @@ import static org.mockito.Mockito.when;
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 class LlmIntegrationTest {
 
+    private static final String HOTEL = "test-hotel";
+
     @MockBean LlmPort llmPort;
     @Autowired SopService sopService;
     @Autowired ConversationService conversationService;
@@ -56,7 +58,7 @@ class LlmIntegrationTest {
                                 false, null, List.of()),
                         new StepRequest("3", 3, "In thử", SopStepType.CHECK, null,
                                 true, SopTerminalKind.RESOLVE, List.of())));
-        return sopService.create(req);
+        return sopService.create(HOTEL, req);
     }
 
     @Test
@@ -65,7 +67,7 @@ class LlmIntegrationTest {
         when(llmPort.isConfigured()).thenReturn(false);
 
         buildSop("llm-off-printer");
-        ConversationResponse conv = conversationService.create(new ConversationRequest("alice", "máy in không in được"));
+        ConversationResponse conv = conversationService.create(new ConversationRequest(HOTEL, "alice", "máy in không in được"));
         conv = conversationService.sendMessage(conv.id(), new MessageRequest("máy in đang bật", null, null));
         assertEquals("2", conv.currentStepKey());
         conv = conversationService.sendMessage(conv.id(), new MessageRequest("đã kiểm tra, không kẹt giấy", null, null));
@@ -87,7 +89,7 @@ class LlmIntegrationTest {
         });
 
         buildSop("llm-resolve-printer");
-        ConversationResponse conv = conversationService.create(new ConversationRequest("bob", "máy in không in được"));
+        ConversationResponse conv = conversationService.create(new ConversationRequest(HOTEL, "bob", "máy in không in được"));
         conv = conversationService.sendMessage(conv.id(), new MessageRequest("bật rồi", null, null)); // step 2
         conv = conversationService.sendMessage(conv.id(), new MessageRequest("in được chưa?", null, null)); // -> terminal 3 -> RESOLVED
         assertEquals(ConversationStatus.RESOLVED, conv.status());
@@ -102,7 +104,7 @@ class LlmIntegrationTest {
                 .thenReturn(new LlmStepDecision("CONTINUE", "bogus-key", null, null, null));
 
         buildSop("llm-guard-printer");
-        ConversationResponse conv = conversationService.create(new ConversationRequest("carol", "máy in không in được"));
+        ConversationResponse conv = conversationService.create(new ConversationRequest(HOTEL, "carol", "máy in không in được"));
         conv = conversationService.sendMessage(conv.id(), new MessageRequest("trả lời", null, null));
         assertEquals("2", conv.currentStepKey()); // defaultNext, NOT a jump
     }
@@ -119,7 +121,7 @@ class LlmIntegrationTest {
         });
 
         buildSop("llm-esc-printer");
-        ConversationResponse conv = conversationService.create(new ConversationRequest("dan", "máy in không in được"));
+        ConversationResponse conv = conversationService.create(new ConversationRequest(HOTEL, "dan", "máy in không in được"));
         conv = conversationService.sendMessage(conv.id(), new MessageRequest("bật", null, null)); // step 2
         conv = conversationService.sendMessage(conv.id(), new MessageRequest("vẫn lỗi", null, null)); // ESCALATE at step 2
         assertEquals(ConversationStatus.ESCALATED, conv.status());
