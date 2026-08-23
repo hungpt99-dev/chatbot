@@ -15,12 +15,17 @@ import com.helpdesk.domain.model.SopStep;
 import com.helpdesk.domain.model.StepType;
 import com.helpdesk.domain.model.SupportCase;
 import com.helpdesk.domain.port.TicketPort;
+import com.helpdesk.domain.port.TranslationPort;
+import com.helpdesk.domain.port.VisionPort;
 import com.helpdesk.domain.repository.AuditEventRepository;
 import com.helpdesk.domain.repository.ConversationMessageRepository;
 import com.helpdesk.domain.repository.ConversationRepository;
+import com.helpdesk.domain.repository.MessageAttachmentRepository;
 import com.helpdesk.domain.repository.SupportCaseRepository;
 import com.helpdesk.web.dto.MessageRequest;
 import com.helpdesk.web.dto.SopResponse;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -36,6 +41,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -59,13 +65,19 @@ class ConversationServiceTicketTest {
     @Mock OfflineInterpreter interpreter;
     @Mock ResponseComposer composer;
     @Mock TicketPort ticketPort;
+    @Mock TranslationPort translationPort;
+    @Mock MeterRegistry meterRegistry;
+    @Mock VisionPort visionPort;
+    @Mock MessageAttachmentRepository attachmentRepository;
 
     private ConversationService service;
 
     @BeforeEach
     void setUp() {
+        when(meterRegistry.counter(anyString(), anyString(), anyString())).thenReturn(mock(Counter.class));
         service = new ConversationService(conversationRepository, messageRepository, caseRepository,
-                auditRepository, sopService, engine, llmPort, interpreter, composer, ticketPort);
+                auditRepository, sopService, engine, llmPort, interpreter, composer,
+                ticketPort, translationPort, meterRegistry, visionPort, attachmentRepository);
     }
 
     @Test

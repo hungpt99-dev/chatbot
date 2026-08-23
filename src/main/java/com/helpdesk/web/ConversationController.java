@@ -56,7 +56,7 @@ public class ConversationController {
                 throw new RuntimeException("could not read uploaded image: " + e.getMessage(), e);
             }
         }
-        return conversationService.sendMessage(id, message, branchKey, null, bytes, contentType);
+        return conversationService.sendMessage(id, message, branchKey, null, bytes, contentType, null);
     }
 
     @GetMapping("/{id}")

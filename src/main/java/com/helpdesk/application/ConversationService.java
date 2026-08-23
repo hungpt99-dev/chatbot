@@ -38,7 +38,9 @@ import com.helpdesk.web.exception.CaseNotFoundException;
 import com.helpdesk.web.exception.ConversationClosedException;
 import com.helpdesk.web.exception.ConversationNotFoundException;
 import com.helpdesk.web.exception.NoSopFoundException;
+import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -139,7 +141,7 @@ public class ConversationService {
     public ConversationResponse sendMessage(Long conversationId, MessageRequest req) {
         Instant startedAt = Instant.now();
         ConversationResponse resp = sendMessage(conversationId, req.message(), req.branchKey(),
-                req.stepResult(), null, null);
+                req.stepResult(), null, null, req.lang());
         recordTimer("conversation.message.latency", null, startedAt);
         return resp;
     }
@@ -147,7 +149,7 @@ public class ConversationService {
     @Transactional
     public ConversationResponse sendMessage(Long conversationId, String message,
                                             String branchKey, StepResultDto stepResult,
-                                            byte[] imageBytes, String contentType) {
+                                            byte[] imageBytes, String contentType, String lang) {
         Conversation conv = conversationRepository.findById(conversationId)
                 .orElseThrow(() -> new ConversationNotFoundException(conversationId));
         if (conv.getStatus() == ConversationStatus.RESOLVED
@@ -211,7 +213,7 @@ public class ConversationService {
 
         EngineResult result = engine.advance(sopDto, current, outcome);
 
-        String assistantText = localize(composer.compose(result, sopDto), req.lang());
+        String assistantText = localize(composer.compose(result, sopDto), lang);
         appendMessage(conv, MessageRole.ASSISTANT, kindFor(result), assistantText,
                 sop.getCode(), result.currentStepKey(), "TROUBLESHOOT", outcome.stepResult().name());
         auditRepository.save(new AuditEvent(hotelId, conv.getId(), sop.getCode(), conv.getCurrentStepKey(),
@@ -233,11 +235,10 @@ public class ConversationService {
 
         upsertCase(conv, sop, result, outcome);
 
-        recordTimer("conversation.message.latency", hotelId, startedAt);
         if ("RESOLVED".equals(result.status())) {
-            meterRegistry.counter("conversations.resolved", "hotel", hotelId).increment();
+            incrementCounter("conversations.resolved", hotelId);
         } else if ("ESCALATED".equals(result.status())) {
-            meterRegistry.counter("conversations.escalated", "hotel", hotelId).increment();
+            incrementCounter("conversations.escalated", hotelId);
         }
 
         return ConversationResponse.from(conv, sopDto, messagesOf(conv.getId()));
@@ -282,7 +283,17 @@ public class ConversationService {
 
     private void recordTimer(String name, String hotelId, Instant startedAt) {
         Duration elapsed = Duration.between(startedAt, Instant.now());
-        meterRegistry.timer(name, "hotel", hotelId).record(elapsed);
+        Timer timer = meterRegistry.timer(name, "hotel", hotelId == null ? "unknown" : hotelId);
+        if (timer != null) {
+            timer.record(elapsed);
+        }
+    }
+
+    private void incrementCounter(String name, String hotelId) {
+        Counter counter = meterRegistry.counter(name, "hotel", hotelId == null ? "unknown" : hotelId);
+        if (counter != null) {
+            counter.increment();
+        }
     }
 
     private SopResponse bestRetrieval(String hotelId, String problem) {
