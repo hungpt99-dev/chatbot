@@ -12,12 +12,11 @@ import java.util.Set;
 /**
  * Selects the active retrieval backend(s) based on {@code helpdesk.retrieval.mode}
  * (LEXICAL | VECTOR | HYBRID, default LEXICAL). This is the single seam between
- * SopService and the underlying retrievers, so adding a real vector backend later
- * is a config + adapter change only.
+ * SopService and the underlying retrievers.
  *
  * <p>HYBRID merges lexical and vector candidates, de-duplicated and ordered
- * lexical-first. Because the shipped {@link VectorRetrieverAdapter} is a stub that
- * returns nothing, HYBRID currently degrades gracefully to lexical.
+ * lexical-first. Both backends are now real: {@link VectorRetrieverAdapter} ranks
+ * hotel-scoped SOPs by cosine similarity over in-process embeddings.
  */
 @Component
 public class LexicalOrVectorRetrievalStrategy {

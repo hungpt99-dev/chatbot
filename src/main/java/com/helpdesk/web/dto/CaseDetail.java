@@ -17,6 +17,7 @@ public record CaseDetail(
         ConversationStatus status,
         String failedStepKey,
         String escalationReason,
+        String externalTicketRef,
         Instant startedAt,
         Instant resolvedAt,
         Instant escalatedAt
@@ -25,6 +26,7 @@ public record CaseDetail(
         return new CaseDetail(
                 c.getReference(), c.getConversationId(), c.getHotelId(), c.getEmployee(), c.getProblem(),
                 c.getSopId(), c.getSopTitle(), c.getStatus(), c.getFailedStepKey(),
-                c.getEscalationReason(), c.getStartedAt(), c.getResolvedAt(), c.getEscalatedAt());
+                c.getEscalationReason(), c.getExternalTicketRef(),
+                c.getStartedAt(), c.getResolvedAt(), c.getEscalatedAt());
     }
 }

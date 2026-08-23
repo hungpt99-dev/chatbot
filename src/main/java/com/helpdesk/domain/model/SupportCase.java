@@ -61,4 +61,7 @@ public class SupportCase {
 
     @Column(name = "escalated_at")
     private Instant escalatedAt;
+
+    @Column(name = "external_ticket_ref", length = 256)
+    private String externalTicketRef;
 }

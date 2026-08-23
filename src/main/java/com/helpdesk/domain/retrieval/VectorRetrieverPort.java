@@ -9,12 +9,11 @@ import java.util.List;
  * {@link LexicalSopRetriever}: given a hotel-scoped problem text, return ranked
  * candidate SOPs as a {@link RetrievalResult}.
  *
- * <p>This is the SPI for the Phase 1F RAG spike. The shipped implementation
- * ({@code VectorRetrieverAdapter}) is a NO-OP stub because no embedding model or
- * vector store is wired yet. A production implementation would embed the query,
- * query pgvector (or a hosted index), and map rows back to {@link Sop} entities.
- * Callers (the retrieval strategy + SopService) must not change when this is
- * promoted from stub to real.
+ * <p>The shipped implementation ({@code VectorRetrieverAdapter}) performs
+ * in-process embedding + cosine ranking over an in-process vector store
+ * (sop_embedding), with no external model. Swapping in a hosted embeddings/
+ * pgvector backend later is an adapter-only change; callers (the retrieval
+ * strategy + SopService) must not change.
  */
 public interface VectorRetrieverPort {
 

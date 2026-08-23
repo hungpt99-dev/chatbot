@@ -17,6 +17,7 @@ import com.helpdesk.domain.model.MessageKind;
 import com.helpdesk.domain.model.MessageRole;
 import com.helpdesk.domain.model.Sop;
 import com.helpdesk.domain.model.SupportCase;
+import com.helpdesk.domain.port.TicketPort;
 import com.helpdesk.domain.repository.AuditEventRepository;
 import com.helpdesk.domain.repository.ConversationMessageRepository;
 import com.helpdesk.domain.repository.ConversationRepository;
@@ -56,6 +57,7 @@ public class ConversationService {
     private final LlmPort llmPort;
     private final OfflineInterpreter interpreter;
     private final ResponseComposer composer;
+    private final TicketPort ticketPort;
 
     public ConversationService(ConversationRepository conversationRepository,
                                ConversationMessageRepository messageRepository,
@@ -65,7 +67,8 @@ public class ConversationService {
                                SopExecutionEngine engine,
                                LlmPort llmPort,
                                OfflineInterpreter interpreter,
-                               ResponseComposer composer) {
+                               ResponseComposer composer,
+                               TicketPort ticketPort) {
         this.conversationRepository = conversationRepository;
         this.messageRepository = messageRepository;
         this.caseRepository = caseRepository;
@@ -75,6 +78,7 @@ public class ConversationService {
         this.llmPort = llmPort;
         this.interpreter = interpreter;
         this.composer = composer;
+        this.ticketPort = ticketPort;
     }
 
     @Transactional
@@ -279,6 +283,10 @@ public class ConversationService {
             sc.setFailedStepKey(result.currentStepKey());
             sc.setEscalationReason(outcome.escalationReason());
             sc.setEscalatedAt(conv.getEscalatedAt());
+            String externalRef = ticketPort.raiseTicket(sc);
+            if (externalRef != null) {
+                sc.setExternalTicketRef(externalRef);
+            }
         }
         if ("RESOLVED".equals(result.status())) {
             sc.setResolvedAt(conv.getResolvedAt());

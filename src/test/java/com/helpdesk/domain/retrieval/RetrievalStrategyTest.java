@@ -17,9 +17,9 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Phase 1F RAG spike: verifies the retrieval strategy switches backends by mode.
- * LEXICAL returns candidates; VECTOR (stub) returns empty; HYBRID merges and
- * degrades to lexical when the vector backend is a stub.
+ * Verifies the retrieval strategy switches backends by mode. LEXICAL returns
+ * candidates via keyword overlap; VECTOR returns candidates via in-process
+ * embeddings (cosine); HYBRID merges both backends de-duplicated.
  */
 @SpringBootTest
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
@@ -29,7 +29,7 @@ class RetrievalStrategyTest {
 
     @Autowired SopRepository sopRepository;
     @Autowired LexicalSopRetriever lexical;
-    @Autowired VectorRetrieverAdapter vectorStub;
+    @Autowired VectorRetrieverAdapter vector;
 
     private void seed() {
         SopRequest req = new SopRequest(
@@ -43,26 +43,27 @@ class RetrievalStrategyTest {
     @Test
     void lexicalModeReturnsCandidates() {
         seed();
-        LexicalOrVectorRetrievalStrategy s = new LexicalOrVectorRetrievalStrategy(lexical, vectorStub, "LEXICAL");
+        LexicalOrVectorRetrievalStrategy s = new LexicalOrVectorRetrievalStrategy(lexical, vector, "LEXICAL");
         RetrievalResult r = s.retrieve(HOTEL, "Máy in không in được");
         assertFalse(r.isEmpty());
         assertEquals("strat-printer", r.candidates().get(0).getCode());
     }
 
     @Test
-    void vectorModeReturnsEmptyStub() {
+    void vectorModeReturnsCandidates() {
         seed();
-        LexicalOrVectorRetrievalStrategy s = new LexicalOrVectorRetrievalStrategy(lexical, vectorStub, "VECTOR");
+        LexicalOrVectorRetrievalStrategy s = new LexicalOrVectorRetrievalStrategy(lexical, vector, "VECTOR");
         RetrievalResult r = s.retrieve(HOTEL, "Máy in không in được");
-        assertTrue(r.isEmpty());
+        assertFalse(r.isEmpty());
+        assertEquals("strat-printer", r.candidates().get(0).getCode());
     }
 
     @Test
-    void hybridModeFallsBackToLexicalWhenVectorStubEmpty() {
+    void hybridModeMergesLexicalAndVector() {
         seed();
-        LexicalOrVectorRetrievalStrategy s = new LexicalOrVectorRetrievalStrategy(lexical, vectorStub, "HYBRID");
+        LexicalOrVectorRetrievalStrategy s = new LexicalOrVectorRetrievalStrategy(lexical, vector, "HYBRID");
         RetrievalResult r = s.retrieve(HOTEL, "Máy in không in được");
-        // vector stub returns nothing, so hybrid degrades to the lexical result
+        // both backends find the printer SOP; hybrid merges de-duplicated and non-empty
         assertFalse(r.isEmpty());
         assertEquals("strat-printer", r.candidates().get(0).getCode());
     }
@@ -70,7 +71,7 @@ class RetrievalStrategyTest {
     @Test
     void unknownModeDefaultsToLexical() {
         seed();
-        LexicalOrVectorRetrievalStrategy s = new LexicalOrVectorRetrievalStrategy(lexical, vectorStub, "bogus");
+        LexicalOrVectorRetrievalStrategy s = new LexicalOrVectorRetrievalStrategy(lexical, vector, "bogus");
         RetrievalResult r = s.retrieve(HOTEL, "Máy in không in được");
         assertFalse(r.isEmpty());
     }
