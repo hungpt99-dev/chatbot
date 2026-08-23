@@ -1,8 +1,14 @@
 # AI SOP Helpdesk — Phase 1 (MVP)
 
-Internal AI assistant that helps employees resolve common IT/support problems by following
-**predefined SOPs** (Standard Operating Procedures). The AI is *constrained* by the SOP
-corpus — it never invents steps. This is the greenfield `chatbot` repository.
+Internal AI assistant that helps **hotel-chain** employees (front desk, guest
+services, back office, F&B, housekeeping) resolve common IT problems by following
+**predefined SOPs** (Standard Operating Procedures). The AI is *constrained* by the
+SOP corpus — it never invents steps. This is the greenfield `chatbot` repository.
+
+> Scope + delivery decisions: product domain is a **hotel chain's IT support**; the
+> assistant is delivered as a **single Spring Boot app** — the chat + operator UI is
+> server-rendered static assets in this repo. **No separate React/Angular SPA.**
+> See `docs/adr/ADR-0008-frontend-and-domain.md`.
 
 > Status: **Phase 1A complete** (SOP model, CRUD, lexical retrieval, 8 seed SOPs, tests).
 > **Phase 1B complete** (conversation flow, deterministic execution engine, case tracking, audit, 37 tests green).

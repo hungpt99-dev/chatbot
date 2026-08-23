@@ -1,0 +1,23 @@
+{
+  "id": "keycard-encoder-failure",
+  "title": "Keycard / encoder failure (room access)",
+  "description": "Front desk cannot encode a keycard or the encoded card does not open the guest room door.",
+  "category": "Hotel IT / Keycard",
+  "problemDescription": "Mã thẻ từ không mở được cửa. Keycard encoder fails, card not recognized, door does not unlock.",
+  "symptoms": ["keycard not working", "encoder error", "card không mở cửa", "mã thẻ từ lỗi", "door won't unlock", "front desk encoder"],
+  "prerequisites": ["Employee is at the front desk", "Employee has the guest's room number / reservation"],
+  "expectedResult": "A working keycard that opens the correct guest room.",
+  "failureCondition": "After all steps the encoder still fails or the card still will not open the door.",
+  "escalationCondition": "Hardware fault suspected (encoder or door lock) or steps exhausted without resolution.",
+  "steps": [
+    {"stepKey": "1", "stepOrder": 1, "instruction": "Is the encoder connected and showing ready? (USB/network LED solid, no red error.)", "type": "QUESTION", "defaultNext": "2", "branches": [{"branchKey": "disconnected", "conditionText": "encoder disconnected / not ready / red error", "gotoStepKey": "2b"}]},
+    {"stepKey": "2b", "stepOrder": 2, "instruction": "Check the encoder cable / reconnect it, and confirm the encoder software is open and logged in. Restart the encoder app if needed.", "type": "ACTION", "defaultNext": "2"},
+    {"stepKey": "2", "stepOrder": 3, "instruction": "Re-encode the card for the correct room. Does the encoder report success?", "type": "CHECK", "defaultNext": "3", "branches": [{"branchKey": "encode_fail", "conditionText": "encode failed / error message", "gotoStepKey": "4"}]},
+    {"stepKey": "3", "stepOrder": 4, "instruction": "Test the card at the door. Does it unlock?", "type": "CHECK", "defaultNext": "7", "branches": [{"branchKey": "door_fail", "conditionText": "door still will not unlock", "gotoStepKey": "5"}]},
+    {"stepKey": "4", "stepOrder": 5, "instruction": "Confirm the room number matches the reservation in the PMS, then retry encode with a fresh blank card. Does it succeed now?", "type": "CHECK", "defaultNext": "3", "branches": [{"branchKey": "still_fail", "conditionText": "still failing", "gotoStepKey": "5"}]},
+    {"stepKey": "5", "stepOrder": 6, "instruction": "Try a different encoder (backup station) or a different door lock reader if available. Does a card from the backup work?", "type": "CHECK", "defaultNext": "7", "branches": [{"branchKey": "backup_fail", "conditionText": "backup also fails", "gotoStepKey": "8"}]},
+    {"stepKey": "7", "stepOrder": 7, "instruction": "Great — issue the working card to the guest and confirm. ", "type": "CHECK", "defaultNext": "9", "branches": [{"branchKey": "ok", "conditionText": "guest has working key", "gotoStepKey": "9"}]},
+    {"stepKey": "9", "stepOrder": 8, "instruction": "", "type": "ESCALATE", "terminal": true, "terminalKind": "RESOLVE"},
+    {"stepKey": "8", "stepOrder": 9, "instruction": "", "type": "ESCALATE", "terminal": true, "terminalKind": "ESCALATE"}
+  ]
+}

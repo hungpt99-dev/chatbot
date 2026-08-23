@@ -1,8 +1,17 @@
 # AI SOP Helpdesk — Phase 1 Proposal (MVP)
 
-> Status: PROPOSAL — awaiting approval. No app/logic code written yet.
-> Target repo: `git@github.com:hungpt99-dev/chatbot.git` (currently empty — greenfield).
-> Author: Hermes (architecture proposal).
+> Product scope: an **AI IT-support assistant for a hotel chain** (front desk,
+> guest services, back office, F&B, housekeeping). Employees describe an IT
+> problem; the assistant walks them through a curated SOP (PMS login, guest
+> Wi-Fi, POS/guest printers, keycard encoder, booking sync, password reset,
+> email, VPN, display, network drives) and escalates to a ticket on failure.
+>
+> Delivery: a **single Spring Boot application** — the chat + operator UI is
+> server-rendered static assets inside this repo (`src/main/resources/ui/`).
+> **No separate React/Angular SPA**, no Node build, no CORS boundary.
+> See ADR-0008 (frontend + domain).
+>
+> Status: PROPOSAL (later superseded by Phases 1A–1E, which shipped).
 
 ---
 
@@ -182,11 +191,14 @@ Every mutation returns the **structured SOP execution state** so UI/tests assert
 
 ---
 
-## 8. Seed SOPs (8, realistic)
+## 8. Seed SOPs (8, hotel-IT scoped)
 
-1. Printer cannot print  2. Computer has no Internet  3. WiFi cannot connect
-4. Cannot login to company account  5. Password reset  6. Email cannot send
-7. VPN cannot connect  8. Monitor / display not working
+1. Printer cannot print (POS / guest / front-desk printer)  2. Computer has no Internet
+3. Guest Wi-Fi cannot connect (captive portal)  4. Cannot login to PMS / company account
+5. Password reset  6. Email cannot send  7. VPN cannot connect  8. Monitor / display not working
+
+Hotel-specific extensions planned: keycard/encoder failure, POS terminal down,
+booking/reservation sync failure between OTA/channel-manager and PMS.
 
 ---
 

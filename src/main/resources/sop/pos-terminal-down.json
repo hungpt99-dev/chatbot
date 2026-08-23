@@ -1,0 +1,24 @@
+{
+  "id": "pos-terminal-down",
+  "title": "POS terminal down (F&B / front desk)",
+  "description": "A point-of-sale terminal cannot take orders or payments (F&B, bar, banquet, front desk checkout).",
+  "category": "Hotel IT / POS",
+  "problemDescription": "Máy POS bị lỗi. POS terminal frozen, cannot connect, payment declined, printer off.",
+  "symptoms": ["pos not working", "máy pos lỗi", "terminal frozen", "cannot take order", "payment declined", "pos offline"],
+  "prerequisites": ["Employee is at the POS terminal", "Employee can see the terminal screen"],
+  "expectedResult": "POS is back online and can take orders/payments.",
+  "failureCondition": "After all steps the POS still cannot operate.",
+  "escalationCondition": "Suspected network/hardware fault or steps exhausted without resolution.",
+  "steps": [
+    {"stepKey": "1", "stepOrder": 1, "instruction": "Is the terminal powered on and the screen responsive (not frozen)?", "type": "QUESTION", "defaultNext": "2", "branches": [{"branchKey": "frozen", "conditionText": "screen frozen / unresponsive", "gotoStepKey": "2b"}]},
+    {"stepKey": "2b", "stepOrder": 2, "instruction": "Hold the power button to restart the terminal. After reboot, is it responsive?", "type": "ACTION", "defaultNext": "2"},
+    {"stepKey": "2", "stepOrder": 3, "instruction": "Can the terminal reach the network / POS server? (Check for 'offline' banner or connection error.)", "type": "CHECK", "defaultNext": "3", "branches": [{"branchKey": "offline", "conditionText": "offline / connection error", "gotoStepKey": "3b"}]},
+    {"stepKey": "3b", "stepOrder": 4, "instruction": "Check the network cable / Wi-Fi and the nearest switch. Restart the terminal network if needed, then retry.", "type": "ACTION", "defaultNext": "3"},
+    {"stepKey": "3", "stepOrder": 5, "instruction": "Can you open a new order and add an item?", "type": "CHECK", "defaultNext": "4", "branches": [{"branchKey": "app_error", "conditionText": "app error / cannot open order", "gotoStepKey": "5"}]},
+    {"stepKey": "4", "stepOrder": 6, "instruction": "Try a test payment (or the guest's payment). Is it accepted?", "type": "CHECK", "defaultNext": "7", "branches": [{"branchKey": "pay_fail", "conditionText": "payment declined / terminal error", "gotoStepKey": "5"}]},
+    {"stepKey": "5", "stepOrder": 7, "instruction": "Restart the POS app (or the payment terminal) and sign back in. Does it work now?", "type": "CHECK", "defaultNext": "4", "branches": [{"branchKey": "still_fail", "conditionText": "still failing", "gotoStepKey": "8"}]},
+    {"stepKey": "7", "stepOrder": 8, "instruction": "Great — the POS is operational again. Continue the order.", "type": "CHECK", "defaultNext": "9", "branches": [{"branchKey": "ok", "conditionText": "pos working", "gotoStepKey": "9"}]},
+    {"stepKey": "9", "stepOrder": 9, "instruction": "", "type": "ESCALATE", "terminal": true, "terminalKind": "RESOLVE"},
+    {"stepKey": "8", "stepOrder": 10, "instruction": "", "type": "ESCALATE", "terminal": true, "terminalKind": "ESCALATE"}
+  ]
+}
