@@ -6,8 +6,12 @@ import com.helpdesk.domain.engine.LlmStepDecision;
 import com.helpdesk.domain.model.StepType;
 import com.helpdesk.web.dto.SopResponse;
 import org.junit.jupiter.api.Test;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.client.ClientHttpRequest;
+import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.web.client.RestClient;
 
+import java.net.URI;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -81,10 +85,10 @@ class OpenAiCompatibleLlmPortTest {
     @Test
     void transportErrorDegradesToNull() {
         // A request factory that always fails makes decide() return null (offline fallback).
-        org.springframework.http.client.ClientHttpRequestFactory failingFactory =
-                new org.springframework.http.client.ClientHttpRequestFactory() {
+        ClientHttpRequestFactory failingFactory =
+                new ClientHttpRequestFactory() {
                     @Override
-                    public org.springframework.http.client.ClientHttpRequest createRequest(java.net.URI uri, org.springframework.http.HttpMethod method) {
+                    public ClientHttpRequest createRequest(URI uri, HttpMethod method) {
                         throw new IllegalStateException("boom");
                     }
                 };

@@ -6,6 +6,9 @@ import com.helpdesk.domain.repository.AuditEventRepository;
 import com.helpdesk.domain.repository.ConversationMessageRepository;
 import com.helpdesk.domain.repository.ConversationRepository;
 import com.helpdesk.domain.repository.SupportCaseRepository;
+import com.helpdesk.web.dto.BranchRequest;
+import com.helpdesk.web.exception.ConversationClosedException;
+import com.helpdesk.web.exception.NoSopFoundException;
 import com.helpdesk.web.dto.CaseSummary;
 import com.helpdesk.web.dto.ConversationRequest;
 import com.helpdesk.web.dto.ConversationResponse;
@@ -46,7 +49,7 @@ class ConversationFlowTest {
     @Autowired SupportCaseRepository caseRepository;
     @Autowired AuditEventRepository auditRepository;
 
-    private com.helpdesk.web.dto.SopResponse buildSop(String id) {
+    private SopResponse buildSop(String id) {
         SopRequest req = new SopRequest(
                 id, "Printer", "desc", "IT", "máy in không in được",
                 List.of("máy in", "không in được", "kẹt giấy"),
@@ -54,8 +57,8 @@ class ConversationFlowTest {
                 List.of(
                         new StepRequest("1", 1, "Máy in có bật không?", SopStepType.QUESTION, "2",
                                 false, null, List.of(
-                                        new com.helpdesk.web.dto.BranchRequest("off", "tắt", "2"),
-                                        new com.helpdesk.web.dto.BranchRequest("on", "bật", "2"))),
+                                        new BranchRequest("off", "tắt", "2"),
+                                        new BranchRequest("on", "bật", "2"))),
                         new StepRequest("2", 2, "Kiểm tra kẹt giấy", SopStepType.ACTION, "3",
                                 false, null, List.of()),
                         new StepRequest("3", 3, "In thử", SopStepType.CHECK, null,
@@ -124,7 +127,7 @@ class ConversationFlowTest {
                         new StepResultDto(StepResult.ESCALATE, "flow-printer3", "1", null,
                                 "đã thử nhưng không được")));
 
-        assertThrows(com.helpdesk.web.exception.ConversationClosedException.class, () ->
+        assertThrows(ConversationClosedException.class, () ->
                 conversationService.sendMessage(conv.id(),
                         new MessageRequest("thêm câu hỏi", null, null)));
     }
@@ -146,7 +149,7 @@ class ConversationFlowTest {
 
     @Test
     void noMatchingSopRejected() {
-        assertThrows(com.helpdesk.web.exception.NoSopFoundException.class, () ->
+        assertThrows(NoSopFoundException.class, () ->
                 conversationService.create(new ConversationRequest(HOTEL, "eve", "tàu hỏa trễ giờ")));
     }
 }

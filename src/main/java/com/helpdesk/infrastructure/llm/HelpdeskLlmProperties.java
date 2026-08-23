@@ -1,12 +1,13 @@
 package com.helpdesk.infrastructure.llm;
 
+import com.helpdesk.domain.engine.OfflineInterpreter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /**
  * BYOK LLM configuration. The API key is expected to come from the environment
  * (e.g. {@code HELPDESK_LLM_API_KEY}) — never committed to the repo. When the key
  * is blank the port reports {@code isConfigured() == false} and the app runs in
- * off-mode (deterministic {@link com.helpdesk.domain.engine.OfflineInterpreter}).
+ * off-mode (deterministic {@link OfflineInterpreter}).
  */
 @ConfigurationProperties(prefix = "helpdesk.llm")
 public record HelpdeskLlmProperties(

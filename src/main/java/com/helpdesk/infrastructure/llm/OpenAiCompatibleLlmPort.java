@@ -10,6 +10,8 @@ import com.helpdesk.domain.engine.LlmPort;
 import com.helpdesk.domain.engine.LlmStepDecision;
 import com.helpdesk.web.dto.SopResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
 import java.util.ArrayList;
@@ -28,7 +30,7 @@ import java.util.List;
  * <p>On any transport/parse failure the port returns {@code null} so the caller
  * degrades to the offline interpreter rather than failing the request.
  */
-@org.springframework.stereotype.Component
+@Component
 @Slf4j
 public class OpenAiCompatibleLlmPort implements LlmPort {
 
@@ -36,7 +38,7 @@ public class OpenAiCompatibleLlmPort implements LlmPort {
     private final RestClient client;
     private final ObjectMapper mapper;
 
-    @org.springframework.beans.factory.annotation.Autowired
+    @Autowired
     public OpenAiCompatibleLlmPort(HelpdeskLlmProperties props, ObjectMapper mapper) {
         this.props = props;
         this.mapper = mapper;

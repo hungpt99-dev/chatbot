@@ -4,6 +4,7 @@ import com.helpdesk.application.SopService;
 import com.helpdesk.domain.model.Hotel;
 import com.helpdesk.domain.repository.HotelRepository;
 import com.helpdesk.web.dto.SopRequest;
+import com.helpdesk.web.exception.DuplicateSopException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
@@ -82,7 +83,7 @@ public class SopSeedLoader {
                     if (req == null) continue;
                     sopService.create(hotel.getId(), req); // throws DuplicateSopException if exists
                     seededSops++;
-                } catch (com.helpdesk.web.exception.DuplicateSopException dup) {
+                } catch (DuplicateSopException dup) {
                     // already seeded for this hotel — idempotent
                 } catch (Exception e) {
                     log.warn("Failed to seed SOP {} for hotel {}: {}", f, hotel.getId(), e.getMessage());

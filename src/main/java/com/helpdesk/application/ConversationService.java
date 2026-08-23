@@ -29,6 +29,10 @@ import com.helpdesk.web.dto.MessageDto;
 import com.helpdesk.web.dto.MessageRequest;
 import com.helpdesk.web.dto.SopResponse;
 import com.helpdesk.web.dto.StepResultDto;
+import com.helpdesk.web.exception.CaseNotFoundException;
+import com.helpdesk.web.exception.ConversationClosedException;
+import com.helpdesk.web.exception.ConversationNotFoundException;
+import com.helpdesk.web.exception.NoSopFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -78,7 +82,7 @@ public class ConversationService {
         String hotelId = req.hotelId();
         SopResponse retrieved = bestRetrieval(hotelId, req.problem());
         if (retrieved == null) {
-            throw new com.helpdesk.web.exception.NoSopFoundException(req.problem());
+            throw new NoSopFoundException(req.problem());
         }
         Sop sop = sopService.load(hotelId, retrieved.id());
 
@@ -108,10 +112,10 @@ public class ConversationService {
     @Transactional
     public ConversationResponse sendMessage(Long conversationId, MessageRequest req) {
         Conversation conv = conversationRepository.findById(conversationId)
-                .orElseThrow(() -> new com.helpdesk.web.exception.ConversationNotFoundException(conversationId));
+                .orElseThrow(() -> new ConversationNotFoundException(conversationId));
         if (conv.getStatus() == ConversationStatus.RESOLVED
                 || conv.getStatus() == ConversationStatus.ESCALATED) {
-            throw new com.helpdesk.web.exception.ConversationClosedException(conversationId);
+            throw new ConversationClosedException(conversationId);
         }
 
         String hotelId = conv.getHotelId();
@@ -178,7 +182,7 @@ public class ConversationService {
 
     public ConversationResponse get(Long conversationId) {
         Conversation conv = conversationRepository.findById(conversationId)
-                .orElseThrow(() -> new com.helpdesk.web.exception.ConversationNotFoundException(conversationId));
+                .orElseThrow(() -> new ConversationNotFoundException(conversationId));
         Sop sop = sopService.load(conv.getHotelId(), conv.getSopId());
         return ConversationResponse.from(conv, SopResponse.from(sop), messagesOf(conv.getId()));
     }
@@ -199,7 +203,7 @@ public class ConversationService {
 
     public CaseDetail getCase(String reference) {
         SupportCase c = caseRepository.findByReference(reference);
-        if (c == null) throw new com.helpdesk.web.exception.CaseNotFoundException(reference);
+        if (c == null) throw new CaseNotFoundException(reference);
         return CaseDetail.from(c);
     }
 

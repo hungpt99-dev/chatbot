@@ -5,7 +5,9 @@ import com.helpdesk.domain.repository.SopRepository;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Lexical (keyword) retrieval over the SOP corpus. This is the MVP retrieval layer:
@@ -93,7 +95,7 @@ public class LexicalSopRetriever {
         if (haystack.isEmpty()) {
             return 0;
         }
-        java.util.Set<String> set = new java.util.HashSet<>(haystack);
+        Set<String> set = new HashSet<>(haystack);
         int hits = 0;
         for (String qt : queryTokens) {
             if (set.contains(qt)) {
