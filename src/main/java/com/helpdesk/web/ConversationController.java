@@ -7,6 +7,7 @@ import com.helpdesk.web.dto.MessageRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import com.helpdesk.web.exception.NoSopFoundException;
 import com.helpdesk.web.exception.ConversationNotFoundException;
@@ -24,11 +25,13 @@ public class ConversationController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasRole('EMPLOYEE') or hasRole('IT_ADMIN')")
     public ConversationResponse create(@Valid @RequestBody ConversationRequest req) {
         return conversationService.create(req);
     }
 
     @PostMapping("/{id}/messages")
+    @PreAuthorize("hasRole('EMPLOYEE') or hasRole('IT_ADMIN')")
     public ConversationResponse sendMessage(@PathVariable Long id,
                                              @Valid @RequestBody MessageRequest req) {
         return conversationService.sendMessage(id, req);

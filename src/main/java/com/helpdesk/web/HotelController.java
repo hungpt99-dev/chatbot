@@ -6,6 +6,7 @@ import com.helpdesk.web.dto.HotelAdminRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -35,17 +36,20 @@ public class HotelController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasRole('IT_ADMIN')")
     public Hotel create(@Valid @RequestBody HotelAdminRequest req) {
         return hotelService.create(req);
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('IT_ADMIN')")
     public Hotel update(@PathVariable String id, @Valid @RequestBody HotelAdminRequest req) {
         return hotelService.update(id, req);
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PreAuthorize("hasRole('IT_ADMIN')")
     public void delete(@PathVariable String id) {
         hotelService.delete(id);
     }

@@ -1,0 +1,14 @@
+# Activates the SSO/RBAC layer so tests can assert enforcement (BRD §7).
+# Activated alongside the "test" profile (which provides the in-memory DB).
+helpdesk:
+  security:
+    enabled: true
+    oidc:
+      client-id: test-client
+      client-secret: test-secret
+      authorization-uri: http://localhost/oauth2/authorize
+      token-uri: http://localhost/oauth2/token
+      jwk-set-uri: http://localhost/oauth2/jwks
+      user-info-uri: http://localhost/oauth2/userinfo
+      redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+      roles-claim: groups

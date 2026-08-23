@@ -8,6 +8,7 @@ import com.helpdesk.web.dto.SopSummary;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -38,12 +39,14 @@ public class SopController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasRole('IT_ADMIN')")
     public SopResponse create(@RequestParam String hotelId,
                               @Valid @RequestBody SopRequest req) {
         return sopService.create(hotelId, req);
     }
 
     @PutMapping("/{code}")
+    @PreAuthorize("hasRole('IT_ADMIN')")
     public SopResponse update(@RequestParam String hotelId, @PathVariable String code,
                               @Valid @RequestBody SopRequest req) {
         return sopService.update(hotelId, code, req);
