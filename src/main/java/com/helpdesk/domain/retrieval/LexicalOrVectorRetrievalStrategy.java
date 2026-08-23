@@ -24,14 +24,17 @@ public class LexicalOrVectorRetrievalStrategy {
 
     private final LexicalSopRetriever lexical;
     private final VectorRetrieverPort vector;
+    private final LexicalDocumentRetriever documentRetriever;
     private final RetrievalMode mode;
 
     public LexicalOrVectorRetrievalStrategy(
             LexicalSopRetriever lexical,
             VectorRetrieverPort vector,
+            LexicalDocumentRetriever documentRetriever,
             @Value("${helpdesk.retrieval.mode:LEXICAL}") String mode) {
         this.lexical = lexical;
         this.vector = vector;
+        this.documentRetriever = documentRetriever;
         this.mode = parse(mode);
     }
 
@@ -50,6 +53,15 @@ public class LexicalOrVectorRetrievalStrategy {
                                   vector.retrieve(hotelId, problemText));
             case LEXICAL -> lexical.retrieve(hotelId, problemText);
         };
+    }
+
+    /**
+     * Document (KB) corpus retrieval, scoped to the same hotel as the SOP corpus.
+     * This is the single seam SopService uses, so uploaded documents are searched
+     * through the same retrieval backend as SOPs.
+     */
+    public DocumentRetrievalResult retrieveDocuments(String hotelId, String query) {
+        return documentRetriever.retrieve(hotelId, query);
     }
 
     private RetrievalResult merge(RetrievalResult primary, RetrievalResult fallback) {

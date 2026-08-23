@@ -30,6 +30,7 @@ class RetrievalStrategyTest {
     @Autowired SopRepository sopRepository;
     @Autowired LexicalSopRetriever lexical;
     @Autowired VectorRetrieverAdapter vectorStub;
+    @Autowired LexicalDocumentRetriever documentRetriever;
 
     private void seed() {
         SopRequest req = new SopRequest(
@@ -43,7 +44,7 @@ class RetrievalStrategyTest {
     @Test
     void lexicalModeReturnsCandidates() {
         seed();
-        LexicalOrVectorRetrievalStrategy s = new LexicalOrVectorRetrievalStrategy(lexical, vectorStub, "LEXICAL");
+        LexicalOrVectorRetrievalStrategy s = new LexicalOrVectorRetrievalStrategy(lexical, vectorStub, documentRetriever, "LEXICAL");
         RetrievalResult r = s.retrieve(HOTEL, "Máy in không in được");
         assertFalse(r.isEmpty());
         assertEquals("strat-printer", r.candidates().get(0).getCode());
@@ -52,7 +53,7 @@ class RetrievalStrategyTest {
     @Test
     void vectorModeReturnsEmptyStub() {
         seed();
-        LexicalOrVectorRetrievalStrategy s = new LexicalOrVectorRetrievalStrategy(lexical, vectorStub, "VECTOR");
+        LexicalOrVectorRetrievalStrategy s = new LexicalOrVectorRetrievalStrategy(lexical, vectorStub, documentRetriever, "VECTOR");
         RetrievalResult r = s.retrieve(HOTEL, "Máy in không in được");
         assertTrue(r.isEmpty());
     }
@@ -60,7 +61,7 @@ class RetrievalStrategyTest {
     @Test
     void hybridModeFallsBackToLexicalWhenVectorStubEmpty() {
         seed();
-        LexicalOrVectorRetrievalStrategy s = new LexicalOrVectorRetrievalStrategy(lexical, vectorStub, "HYBRID");
+        LexicalOrVectorRetrievalStrategy s = new LexicalOrVectorRetrievalStrategy(lexical, vectorStub, documentRetriever, "HYBRID");
         RetrievalResult r = s.retrieve(HOTEL, "Máy in không in được");
         // vector stub returns nothing, so hybrid degrades to the lexical result
         assertFalse(r.isEmpty());
@@ -70,7 +71,7 @@ class RetrievalStrategyTest {
     @Test
     void unknownModeDefaultsToLexical() {
         seed();
-        LexicalOrVectorRetrievalStrategy s = new LexicalOrVectorRetrievalStrategy(lexical, vectorStub, "bogus");
+        LexicalOrVectorRetrievalStrategy s = new LexicalOrVectorRetrievalStrategy(lexical, vectorStub, documentRetriever, "bogus");
         RetrievalResult r = s.retrieve(HOTEL, "Máy in không in được");
         assertFalse(r.isEmpty());
     }

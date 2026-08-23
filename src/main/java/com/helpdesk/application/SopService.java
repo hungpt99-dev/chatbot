@@ -6,6 +6,7 @@ import com.helpdesk.domain.repository.SopRepository;
 import com.helpdesk.domain.retrieval.LexicalOrVectorRetrievalStrategy;
 import com.helpdesk.domain.retrieval.LexicalSopRetriever;
 import com.helpdesk.domain.retrieval.RetrievalResult;
+import com.helpdesk.domain.retrieval.DocumentRetrievalResult;
 import com.helpdesk.web.exception.DuplicateSopException;
 import com.helpdesk.web.exception.SopNotFoundException;
 import com.helpdesk.web.dto.SopRequest;
@@ -65,6 +66,14 @@ public class SopService {
 
     public RetrievalResult retrieve(String hotelId, String problemText) {
         return retriever.retrieve(hotelId, problemText);
+    }
+
+    /**
+     * Retrieve indexed KB document chunks for a hotel-scoped query. Uses the same
+     * retrieval backend (LexicalOrVectorRetrievalStrategy) as SOP retrieval.
+     */
+    public DocumentRetrievalResult retrieveDocuments(String hotelId, String query) {
+        return retriever.retrieveDocuments(hotelId, query);
     }
 
     public Sop load(String hotelId, String code) {

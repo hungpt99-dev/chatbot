@@ -22,6 +22,8 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.flywaydb:flyway-core:10.17.0'
+    implementation 'org.apache.pdfbox:pdfbox:3.0.3'
+    implementation 'org.apache.poi:poi-ooxml:5.3.0'
     implementation 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
     runtimeOnly 'com.h2database:h2'
