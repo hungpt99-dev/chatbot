@@ -13,13 +13,16 @@ import com.helpdesk.domain.model.AuditEvent;
 import com.helpdesk.domain.model.Conversation;
 import com.helpdesk.domain.model.ConversationMessage;
 import com.helpdesk.domain.model.ConversationStatus;
+import com.helpdesk.domain.model.MessageAttachment;
 import com.helpdesk.domain.model.MessageKind;
 import com.helpdesk.domain.model.MessageRole;
 import com.helpdesk.domain.model.Sop;
 import com.helpdesk.domain.model.SupportCase;
+import com.helpdesk.domain.port.VisionPort;
 import com.helpdesk.domain.repository.AuditEventRepository;
 import com.helpdesk.domain.repository.ConversationMessageRepository;
 import com.helpdesk.domain.repository.ConversationRepository;
+import com.helpdesk.domain.repository.MessageAttachmentRepository;
 import com.helpdesk.domain.repository.SupportCaseRepository;
 import com.helpdesk.web.dto.CaseDetail;
 import com.helpdesk.web.dto.CaseSummary;
@@ -56,6 +59,8 @@ public class ConversationService {
     private final LlmPort llmPort;
     private final OfflineInterpreter interpreter;
     private final ResponseComposer composer;
+    private final VisionPort visionPort;
+    private final MessageAttachmentRepository attachmentRepository;
 
     public ConversationService(ConversationRepository conversationRepository,
                                ConversationMessageRepository messageRepository,
@@ -65,7 +70,9 @@ public class ConversationService {
                                SopExecutionEngine engine,
                                LlmPort llmPort,
                                OfflineInterpreter interpreter,
-                               ResponseComposer composer) {
+                               ResponseComposer composer,
+                               VisionPort visionPort,
+                               MessageAttachmentRepository attachmentRepository) {
         this.conversationRepository = conversationRepository;
         this.messageRepository = messageRepository;
         this.caseRepository = caseRepository;
@@ -75,6 +82,8 @@ public class ConversationService {
         this.llmPort = llmPort;
         this.interpreter = interpreter;
         this.composer = composer;
+        this.visionPort = visionPort;
+        this.attachmentRepository = attachmentRepository;
     }
 
     @Transactional
@@ -111,6 +120,14 @@ public class ConversationService {
 
     @Transactional
     public ConversationResponse sendMessage(Long conversationId, MessageRequest req) {
+        return sendMessage(conversationId, req.message(), req.branchKey(),
+                req.stepResult(), null, null);
+    }
+
+    @Transactional
+    public ConversationResponse sendMessage(Long conversationId, String message,
+                                            String branchKey, StepResultDto stepResult,
+                                            byte[] imageBytes, String contentType) {
         Conversation conv = conversationRepository.findById(conversationId)
                 .orElseThrow(() -> new ConversationNotFoundException(conversationId));
         if (conv.getStatus() == ConversationStatus.RESOLVED
@@ -123,34 +140,53 @@ public class ConversationService {
         SopResponse sopDto = SopResponse.from(sop);
         SopResponse.StepDto current = currentStep(sopDto, conv.getCurrentStepKey());
 
-        appendMessage(conv, MessageRole.USER, MessageKind.ANSWER, req.message(), sop.getCode(), conv.getCurrentStepKey(), null, null);
-        conv.setLastUserMessage(req.message());
+        // Analyze the screenshot (if any) and fold the description into the
+        // message the engine/LLM sees. Vision is best-effort: a null result
+        // (unconfigured or transient failure) simply skips enrichment.
+        String visionDescription = null;
+        if (imageBytes != null && imageBytes.length > 0 && visionPort.isConfigured()) {
+            visionDescription = visionPort.analyze(imageBytes, contentType, message);
+        }
+        String effectiveMessage = (message == null ? "" : message);
+        if (visionDescription != null && !visionDescription.isBlank()) {
+            effectiveMessage = (effectiveMessage.isBlank() ? "" : effectiveMessage + "\n")
+                    + "[Screenshot analysis: " + visionDescription + "]";
+        }
+
+        appendMessage(conv, MessageRole.USER, MessageKind.ANSWER, effectiveMessage, sop.getCode(), conv.getCurrentStepKey(), null, null);
+        conv.setLastUserMessage(effectiveMessage);
+
+        if (imageBytes != null && imageBytes.length > 0) {
+            int seq = messageRepository.maxSeq(conv.getId());
+            attachmentRepository.save(new MessageAttachment(conv, hotelId, contentType,
+                    null, imageBytes, seq));
+        }
 
         StepOutcome outcome;
-        if (req.stepResult() != null) {
+        if (stepResult != null) {
             outcome = new StepOutcome(
-                    req.branchKey(),
-                    req.stepResult().result(),
-                    req.stepResult().resolved(),
-                    req.message(),
-                    req.stepResult().escalationReason());
+                    branchKey,
+                    stepResult.result(),
+                    stepResult.resolved(),
+                    effectiveMessage,
+                    stepResult.escalationReason());
         } else if (llmPort.isConfigured()) {
-            LlmStepDecision decision = llmPort.decide(snapshotFor(conv, sopDto, current), req.message());
+            LlmStepDecision decision = llmPort.decide(snapshotFor(conv, sopDto, current), effectiveMessage);
             if (decision != null) {
-                String branchKey = decision.hasBranch() && branchExists(current, decision.branchKey())
+                String decidedBranch = decision.hasBranch() && branchExists(current, decision.branchKey())
                         ? decision.branchKey() : null;
                 StepResult intent = StepResult.valueOf(
                         decision.intent() == null ? "CONTINUE" : decision.intent().toUpperCase());
-                outcome = new StepOutcome(branchKey, intent, decision.stepResult(),
-                        req.message(), decision.escalationReason());
+                outcome = new StepOutcome(decidedBranch, intent, decision.stepResult(),
+                        effectiveMessage, decision.escalationReason());
                 auditRepository.save(new AuditEvent(hotelId, conv.getId(), sop.getCode(), current.stepKey(),
-                        "LLM_DECISION", "intent=" + intent + "; branch=" + branchKey
+                        "LLM_DECISION", "intent=" + intent + "; branch=" + decidedBranch
                         + (decision.response() != null ? "; modelReply=" + decision.response() : "")));
             } else {
-                outcome = interpreter.interpret(req.message(), current);
+                outcome = interpreter.interpret(effectiveMessage, current);
             }
         } else {
-            outcome = interpreter.interpret(req.message(), current);
+            outcome = interpreter.interpret(effectiveMessage, current);
         }
 
         EngineResult result = engine.advance(sopDto, current, outcome);
