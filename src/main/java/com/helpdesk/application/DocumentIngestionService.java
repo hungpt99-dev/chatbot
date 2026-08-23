@@ -2,9 +2,12 @@ package com.helpdesk.application;
 
 import com.helpdesk.domain.model.Document;
 import com.helpdesk.domain.model.DocumentChunk;
+import com.helpdesk.domain.model.DocumentEmbedding;
 import com.helpdesk.domain.repository.DocumentChunkRepository;
+import com.helpdesk.domain.repository.DocumentEmbeddingRepository;
 import com.helpdesk.domain.repository.DocumentRepository;
 import com.helpdesk.domain.retrieval.DocumentRetrievalResult;
+import com.helpdesk.domain.retrieval.EmbeddingService;
 import com.helpdesk.domain.retrieval.LexicalOrVectorRetrievalStrategy;
 import com.helpdesk.infrastructure.document.DocumentContentExtractor;
 import com.helpdesk.web.dto.DocumentMetadata;
@@ -33,20 +36,26 @@ public class DocumentIngestionService {
 
     private final DocumentRepository documentRepository;
     private final DocumentChunkRepository chunkRepository;
+    private final DocumentEmbeddingRepository embeddingRepository;
     private final DocumentContentExtractor extractor;
     private final DocumentChunker chunker;
     private final LexicalOrVectorRetrievalStrategy retriever;
+    private final EmbeddingService embeddingService;
 
     public DocumentIngestionService(DocumentRepository documentRepository,
                                     DocumentChunkRepository chunkRepository,
+                                    DocumentEmbeddingRepository embeddingRepository,
                                     DocumentContentExtractor extractor,
                                     DocumentChunker chunker,
-                                    LexicalOrVectorRetrievalStrategy retriever) {
+                                    LexicalOrVectorRetrievalStrategy retriever,
+                                    EmbeddingService embeddingService) {
         this.documentRepository = documentRepository;
         this.chunkRepository = chunkRepository;
+        this.embeddingRepository = embeddingRepository;
         this.extractor = extractor;
         this.chunker = chunker;
         this.retriever = retriever;
+        this.embeddingService = embeddingService;
     }
 
     @Transactional
@@ -81,9 +90,11 @@ public class DocumentIngestionService {
 
         int index = 0;
         for (String chunkText : chunks) {
+            String chunkId = UUID.randomUUID().toString();
             DocumentChunk chunk = new DocumentChunk(
-                    UUID.randomUUID().toString(), docId, hotelId, index, filename, chunkText);
+                    chunkId, docId, hotelId, index, filename, chunkText);
             chunkRepository.save(chunk);
+            persistEmbedding(hotelId, docId, chunkId, chunkText);
             index++;
         }
 
@@ -114,9 +125,24 @@ public class DocumentIngestionService {
         documentRepository.findByHotelIdAndId(hotelId, documentId)
                 .stream().findFirst()
                 .ifPresent(doc -> {
+                    embeddingRepository.deleteByHotelIdAndDocumentId(hotelId, documentId);
                     chunkRepository.deleteByHotelIdAndDocumentId(hotelId, documentId);
                     documentRepository.delete(doc);
                 });
+    }
+
+    private void persistEmbedding(String hotelId, String documentId, String chunkId, String text) {
+        float[] vec = embeddingService.embed(text);
+        if (EmbeddingService.isZero(vec)) {
+            return;
+        }
+        DocumentEmbedding row = new DocumentEmbedding();
+        row.setHotelId(hotelId);
+        row.setDocumentId(documentId);
+        row.setChunkId(chunkId);
+        row.setContentHash(Integer.toHexString(text.hashCode()));
+        row.setEmbedding(EmbeddingService.serialize(vec));
+        embeddingRepository.save(row);
     }
 
     private byte[] readBytes(MultipartFile file) {

@@ -3,8 +3,10 @@ package com.helpdesk.application;
 import com.helpdesk.domain.model.Document;
 import com.helpdesk.domain.model.DocumentChunk;
 import com.helpdesk.domain.repository.DocumentChunkRepository;
+import com.helpdesk.domain.repository.DocumentEmbeddingRepository;
 import com.helpdesk.domain.repository.DocumentRepository;
 import com.helpdesk.domain.retrieval.DocumentRetrievalResult;
+import com.helpdesk.domain.retrieval.VectorDocumentRetriever;
 import com.helpdesk.web.dto.DocumentMetadata;
 import com.helpdesk.web.exception.UnsupportedDocumentTypeException;
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -40,6 +42,8 @@ class DocumentIngestionTest {
     @Autowired DocumentIngestionService ingestionService;
     @Autowired DocumentChunkRepository chunkRepository;
     @Autowired DocumentRepository documentRepository;
+    @Autowired DocumentEmbeddingRepository embeddingRepository;
+    @Autowired VectorDocumentRetriever vectorDocumentRetriever;
 
     @Test
     void textUploadChunksAndRetrievesChunk() {
@@ -58,6 +62,24 @@ class DocumentIngestionTest {
         DocumentRetrievalResult res = ingestionService.retrieve(HOTEL_A, "printer paper jam");
         assertFalse(res.isEmpty(), "uploaded chunk should be retrievable");
         assertTrue(res.chunks().get(0).getContent().toLowerCase().contains("printer"));
+    }
+
+    @Test
+    void vectorEmbeddingIndexesDocumentSemantically() {
+        // Chunk wording differs from the query wording; lexical overlap is weak,
+        // but the in-process embedding + cosine ranking must still surface it.
+        MockMultipartFile file = new MockMultipartFile("file", "kb.txt", "text/plain",
+                "Paper frequently becomes stuck inside the printing device near the heated roller.".getBytes());
+        ingestionService.upload(HOTEL_A, file);
+
+        // The embedding row must have been persisted on ingest (BRD §5 semantic index).
+        assertFalse(embeddingRepository.findByHotelId(HOTEL_A).isEmpty(),
+                "chunk embedding should be persisted on ingest");
+
+        // Semantic query with distinct phrasing still retrieves the chunk via cosine.
+        DocumentRetrievalResult res = vectorDocumentRetriever.retrieve(HOTEL_A, "printer keeps jamming paper");
+        assertFalse(res.isEmpty(), "vector retrieval should surface the semantically similar chunk");
+        assertTrue(res.chunks().get(0).getContent().toLowerCase().contains("paper"));
     }
 
     @Test

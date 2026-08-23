@@ -31,6 +31,7 @@ class RetrievalStrategyTest {
     @Autowired LexicalSopRetriever lexical;
     @Autowired VectorRetrieverAdapter vectorStub;
     @Autowired LexicalDocumentRetriever documentRetriever;
+    @Autowired VectorDocumentRetriever vectorDocumentRetriever;
 
     private void seed() {
         SopRequest req = new SopRequest(
@@ -44,7 +45,7 @@ class RetrievalStrategyTest {
     @Test
     void lexicalModeReturnsCandidates() {
         seed();
-        LexicalOrVectorRetrievalStrategy s = new LexicalOrVectorRetrievalStrategy(lexical, vectorStub, documentRetriever, "LEXICAL");
+        LexicalOrVectorRetrievalStrategy s = new LexicalOrVectorRetrievalStrategy(lexical, vectorStub, documentRetriever, vectorDocumentRetriever, "LEXICAL");
         RetrievalResult r = s.retrieve(HOTEL, "Máy in không in được");
         assertFalse(r.isEmpty());
         assertEquals("strat-printer", r.candidates().get(0).getCode());
@@ -53,7 +54,7 @@ class RetrievalStrategyTest {
     @Test
     void vectorModeReturnsCandidates() {
         seed();
-        LexicalOrVectorRetrievalStrategy s = new LexicalOrVectorRetrievalStrategy(lexical, vectorStub, documentRetriever, "VECTOR");
+        LexicalOrVectorRetrievalStrategy s = new LexicalOrVectorRetrievalStrategy(lexical, vectorStub, documentRetriever, vectorDocumentRetriever, "VECTOR");
         RetrievalResult r = s.retrieve(HOTEL, "Máy in không in được");
         assertFalse(r.isEmpty());
         assertEquals("strat-printer", r.candidates().get(0).getCode());
@@ -62,7 +63,7 @@ class RetrievalStrategyTest {
     @Test
     void hybridModeMergesLexicalAndVector() {
         seed();
-        LexicalOrVectorRetrievalStrategy s = new LexicalOrVectorRetrievalStrategy(lexical, vectorStub, documentRetriever, "HYBRID");
+        LexicalOrVectorRetrievalStrategy s = new LexicalOrVectorRetrievalStrategy(lexical, vectorStub, documentRetriever, vectorDocumentRetriever, "HYBRID");
         RetrievalResult r = s.retrieve(HOTEL, "Máy in không in được");
         // both backends find the printer SOP; hybrid merges de-duplicated and non-empty
         assertFalse(r.isEmpty());
@@ -72,7 +73,7 @@ class RetrievalStrategyTest {
     @Test
     void unknownModeDefaultsToLexical() {
         seed();
-        LexicalOrVectorRetrievalStrategy s = new LexicalOrVectorRetrievalStrategy(lexical, vectorStub, documentRetriever, "bogus");
+        LexicalOrVectorRetrievalStrategy s = new LexicalOrVectorRetrievalStrategy(lexical, vectorStub, documentRetriever, vectorDocumentRetriever, "bogus");
         RetrievalResult r = s.retrieve(HOTEL, "Máy in không in được");
         assertFalse(r.isEmpty());
     }
