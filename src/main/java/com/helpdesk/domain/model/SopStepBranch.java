@@ -1,6 +1,9 @@
 package com.helpdesk.domain.model;
 
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 /**
  * A conditional edge out of a {@link SopStep}. The LLM may only choose among the
@@ -9,6 +12,9 @@ import jakarta.persistence.*;
  */
 @Entity
 @Table(name = "sop_step_branch")
+@Getter
+@Setter
+@NoArgsConstructor
 public class SopStepBranch {
 
     @Id
@@ -27,22 +33,4 @@ public class SopStepBranch {
 
     @Column(name = "goto_step_key", nullable = false)
     private String gotoStepKey;
-
-    protected SopStepBranch() {
-        // JPA
-    }
-
-    public Long getId() { return id; }
-
-    public SopStep getStep() { return step; }
-    public void setStep(SopStep step) { this.step = step; }
-
-    public String getBranchKey() { return branchKey; }
-    public void setBranchKey(String branchKey) { this.branchKey = branchKey; }
-
-    public String getConditionText() { return conditionText; }
-    public void setConditionText(String conditionText) { this.conditionText = conditionText; }
-
-    public String getGotoStepKey() { return gotoStepKey; }
-    public void setGotoStepKey(String gotoStepKey) { this.gotoStepKey = gotoStepKey; }
 }

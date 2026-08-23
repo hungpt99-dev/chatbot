@@ -1,6 +1,9 @@
 package com.helpdesk.domain.model;
 
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import java.time.Instant;
 
 /**
@@ -11,6 +14,9 @@ import java.time.Instant;
  */
 @Entity
 @Table(name = "audit_event")
+@Getter
+@Setter
+@NoArgsConstructor
 public class AuditEvent {
 
     @Id
@@ -38,8 +44,6 @@ public class AuditEvent {
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 
-    protected AuditEvent() {}
-
     @PrePersist
     void prePersist() {
         this.createdAt = Instant.now();
@@ -63,15 +67,4 @@ public class AuditEvent {
         this.eventType = eventType;
         this.detail = detail;
     }
-
-    public Long getId() { return id; }
-    public Long getConversationId() { return conversationId; }
-    public String getHotelId() { return hotelId; }
-    public void setHotelId(String hotelId) { this.hotelId = hotelId; }
-    public String getSopId() { return sopId; }
-    public String getStepKey() { return stepKey; }
-    public String getEventType() { return eventType; }
-    public String getDetail() { return detail; }
-    public Instant getCreatedAt() { return createdAt; }
-    public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
 }

@@ -5,8 +5,7 @@ import com.helpdesk.domain.model.Hotel;
 import com.helpdesk.domain.repository.HotelRepository;
 import com.helpdesk.web.dto.SopRequest;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.core.io.ClassPathResource;
@@ -25,9 +24,8 @@ import java.util.Map;
  * (keyed by hotel id) to reflect properties that differ.
  */
 @Component
+@Slf4j
 public class SopSeedLoader {
-
-    private static final Logger log = LoggerFactory.getLogger(SopSeedLoader.class);
 
     private final SopService sopService;
     private final HotelRepository hotelRepository;

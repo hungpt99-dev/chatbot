@@ -1,6 +1,9 @@
 package com.helpdesk.domain.model;
 
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -10,6 +13,9 @@ import java.util.List;
  */
 @Entity
 @Table(name = "sop_step")
+@Getter
+@Setter
+@NoArgsConstructor
 public class SopStep {
 
     @Id
@@ -45,37 +51,4 @@ public class SopStep {
 
     @OneToMany(mappedBy = "step", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     private List<SopStepBranch> branches = new ArrayList<>();
-
-    protected SopStep() {
-        // JPA
-    }
-
-    public Long getId() { return id; }
-
-    public Sop getSop() { return sop; }
-    public void setSop(Sop sop) { this.sop = sop; }
-
-    public String getStepKey() { return stepKey; }
-    public void setStepKey(String stepKey) { this.stepKey = stepKey; }
-
-    public int getStepOrder() { return stepOrder; }
-    public void setStepOrder(int stepOrder) { this.stepOrder = stepOrder; }
-
-    public String getInstruction() { return instruction; }
-    public void setInstruction(String instruction) { this.instruction = instruction; }
-
-    public StepType getType() { return type; }
-    public void setType(StepType type) { this.type = type; }
-
-    public String getDefaultNext() { return defaultNext; }
-    public void setDefaultNext(String defaultNext) { this.defaultNext = defaultNext; }
-
-    public boolean isTerminal() { return terminal; }
-    public void setTerminal(boolean terminal) { this.terminal = terminal; }
-
-    public TerminalKind getTerminalKind() { return terminalKind; }
-    public void setTerminalKind(TerminalKind terminalKind) { this.terminalKind = terminalKind; }
-
-    public List<SopStepBranch> getBranches() { return branches; }
-    public void setBranches(List<SopStepBranch> branches) { this.branches = branches; }
 }

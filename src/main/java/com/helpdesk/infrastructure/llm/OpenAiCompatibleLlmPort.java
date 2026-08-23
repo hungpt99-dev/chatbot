@@ -9,8 +9,7 @@ import com.helpdesk.domain.engine.ConversationSnapshot;
 import com.helpdesk.domain.engine.LlmPort;
 import com.helpdesk.domain.engine.LlmStepDecision;
 import com.helpdesk.web.dto.SopResponse;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.client.RestClient;
 
 import java.util.ArrayList;
@@ -30,9 +29,8 @@ import java.util.List;
  * degrades to the offline interpreter rather than failing the request.
  */
 @org.springframework.stereotype.Component
+@Slf4j
 public class OpenAiCompatibleLlmPort implements LlmPort {
-
-    private static final Logger log = LoggerFactory.getLogger(OpenAiCompatibleLlmPort.class);
 
     private final HelpdeskLlmProperties props;
     private final RestClient client;

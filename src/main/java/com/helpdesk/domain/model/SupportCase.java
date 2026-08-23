@@ -1,6 +1,9 @@
 package com.helpdesk.domain.model;
 
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import java.time.Instant;
 
 /**
@@ -10,6 +13,9 @@ import java.time.Instant;
  */
 @Entity
 @Table(name = "support_case")
+@Getter
+@Setter
+@NoArgsConstructor
 public class SupportCase {
 
     @Id
@@ -55,34 +61,4 @@ public class SupportCase {
 
     @Column(name = "escalated_at")
     private Instant escalatedAt;
-
-    public SupportCase() {}
-
-    public Long getId() { return id; }
-    public String getReference() { return reference; }
-    public void setReference(String reference) { this.reference = reference; }
-    public Long getConversationId() { return conversationId; }
-    public void setConversationId(Long conversationId) { this.conversationId = conversationId; }
-    public String getHotelId() { return hotelId; }
-    public void setHotelId(String hotelId) { this.hotelId = hotelId; }
-    public String getEmployee() { return employee; }
-    public void setEmployee(String employee) { this.employee = employee; }
-    public String getProblem() { return problem; }
-    public void setProblem(String problem) { this.problem = problem; }
-    public String getSopId() { return sopId; }
-    public void setSopId(String sopId) { this.sopId = sopId; }
-    public String getSopTitle() { return sopTitle; }
-    public void setSopTitle(String sopTitle) { this.sopTitle = sopTitle; }
-    public ConversationStatus getStatus() { return status; }
-    public void setStatus(ConversationStatus status) { this.status = status; }
-    public String getFailedStepKey() { return failedStepKey; }
-    public void setFailedStepKey(String failedStepKey) { this.failedStepKey = failedStepKey; }
-    public String getEscalationReason() { this.escalationReason = escalationReason; return escalationReason; }
-    public void setEscalationReason(String escalationReason) { this.escalationReason = escalationReason; }
-    public Instant getStartedAt() { return startedAt; }
-    public void setStartedAt(Instant startedAt) { this.startedAt = startedAt; }
-    public Instant getResolvedAt() { return resolvedAt; }
-    public void setResolvedAt(Instant resolvedAt) { this.resolvedAt = resolvedAt; }
-    public Instant getEscalatedAt() { return escalatedAt; }
-    public void setEscalatedAt(Instant escalatedAt) { this.escalatedAt = escalatedAt; }
 }

@@ -1,6 +1,9 @@
 package com.helpdesk.domain.model;
 
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import java.time.Instant;
 
 /**
@@ -11,6 +14,9 @@ import java.time.Instant;
  */
 @Entity
 @Table(name = "hotel")
+@Getter
+@Setter
+@NoArgsConstructor
 public class Hotel {
 
     @Id
@@ -29,22 +35,10 @@ public class Hotel {
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 
-    protected Hotel() {}
-
     public Hotel(String id, String name, String location) {
         this.id = id;
         this.name = name;
         this.location = location;
         this.createdAt = Instant.now();
     }
-
-    public String getId() { return id; }
-    public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
-    public String getLocation() { return location; }
-    public void setLocation(String location) { this.location = location; }
-    public String getRegion() { return region; }
-    public void setRegion(String region) { this.region = region; }
-    public Instant getCreatedAt() { return createdAt; }
-    public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
 }

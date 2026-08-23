@@ -1,6 +1,9 @@
 package com.helpdesk.domain.model;
 
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import java.time.Instant;
 
 /**
@@ -9,6 +12,9 @@ import java.time.Instant;
  */
 @Entity
 @Table(name = "conversation_message")
+@Getter
+@Setter
+@NoArgsConstructor
 public class ConversationMessage {
 
     @Id
@@ -48,8 +54,6 @@ public class ConversationMessage {
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 
-    protected ConversationMessage() {}
-
     @PrePersist
     void prePersist() {
         this.createdAt = Instant.now();
@@ -63,26 +67,4 @@ public class ConversationMessage {
         this.kind = kind;
         this.content = content;
     }
-
-    public Long getId() { return id; }
-    public Conversation getConversation() { return conversation; }
-    public void setConversation(Conversation conversation) { this.conversation = conversation; }
-    public int getSeq() { return seq; }
-    public void setSeq(int seq) { this.seq = seq; }
-    public MessageRole getRole() { return role; }
-    public void setRole(MessageRole role) { this.role = role; }
-    public MessageKind getKind() { return kind; }
-    public void setKind(MessageKind kind) { this.kind = kind; }
-    public String getContent() { return content; }
-    public void setContent(String content) { this.content = content; }
-    public String getSopId() { return sopId; }
-    public void setSopId(String sopId) { this.sopId = sopId; }
-    public String getStepKey() { return stepKey; }
-    public void setStepKey(String stepKey) { this.stepKey = stepKey; }
-    public String getIntent() { return intent; }
-    public void setIntent(String intent) { this.intent = intent; }
-    public String getStepResult() { return stepResult; }
-    public void setStepResult(String stepResult) { this.stepResult = stepResult; }
-    public Instant getCreatedAt() { return createdAt; }
-    public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
 }
