@@ -8,7 +8,7 @@ import jakarta.validation.constraints.NotBlank;
  * are optional on create/update.
  */
 public record HotelAdminRequest(
-        @NotBlank String id,
+        String id,
         @NotBlank String name,
         String location,
         String region

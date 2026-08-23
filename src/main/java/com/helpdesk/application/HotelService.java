@@ -40,6 +40,9 @@ public class HotelService {
 
     @Transactional
     public Hotel create(HotelAdminRequest req) {
+        if (req.id() == null || req.id().isBlank()) {
+            throw new IllegalArgumentException("hotel id is required");
+        }
         if (hotelRepository.existsById(req.id())) {
             throw new DuplicateHotelException(req.id());
         }
