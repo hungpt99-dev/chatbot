@@ -46,6 +46,15 @@ helpdesk:
     api-key: ${HELPDESK_TRANSLATION_API_KEY:}
     model: ${HELPDESK_TRANSLATION_MODEL:}
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,metrics,info
+  endpoint:
+    health:
+      show-details: always
+
 server:
   port: 8080
 

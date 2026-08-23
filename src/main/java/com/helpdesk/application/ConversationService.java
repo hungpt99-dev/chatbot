@@ -35,9 +35,11 @@ import com.helpdesk.web.exception.CaseNotFoundException;
 import com.helpdesk.web.exception.ConversationClosedException;
 import com.helpdesk.web.exception.ConversationNotFoundException;
 import com.helpdesk.web.exception.NoSopFoundException;
+import io.micrometer.core.instrument.MeterRegistry;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 
@@ -60,6 +62,7 @@ public class ConversationService {
     private final ResponseComposer composer;
     private final TicketPort ticketPort;
     private final TranslationPort translationPort;
+    private final MeterRegistry meterRegistry;
 
     public ConversationService(ConversationRepository conversationRepository,
                                ConversationMessageRepository messageRepository,
@@ -71,7 +74,8 @@ public class ConversationService {
                                OfflineInterpreter interpreter,
                                ResponseComposer composer,
                                TicketPort ticketPort,
-                               TranslationPort translationPort) {
+                               TranslationPort translationPort,
+                               MeterRegistry meterRegistry) {
         this.conversationRepository = conversationRepository;
         this.messageRepository = messageRepository;
         this.caseRepository = caseRepository;
@@ -83,11 +87,13 @@ public class ConversationService {
         this.composer = composer;
         this.ticketPort = ticketPort;
         this.translationPort = translationPort;
+        this.meterRegistry = meterRegistry;
     }
 
     @Transactional
     public ConversationResponse create(ConversationRequest req) {
         String hotelId = req.hotelId();
+        Instant startedAt = Instant.now();
         SopResponse retrieved = bestRetrieval(hotelId, req.problem());
         if (retrieved == null) {
             throw new NoSopFoundException(req.problem());
@@ -114,11 +120,15 @@ public class ConversationService {
         saved.setLastIntent("TROUBLESHOOT");
         conversationRepository.save(saved);
 
+        recordTimer("conversation.first.response.latency", hotelId, startedAt);
+        meterRegistry.counter("conversations.started", "hotel", hotelId).increment();
+
         return ConversationResponse.from(saved, SopResponse.from(sop), messagesOf(saved.getId()));
     }
 
     @Transactional
     public ConversationResponse sendMessage(Long conversationId, MessageRequest req) {
+        Instant startedAt = Instant.now();
         Conversation conv = conversationRepository.findById(conversationId)
                 .orElseThrow(() -> new ConversationNotFoundException(conversationId));
         if (conv.getStatus() == ConversationStatus.RESOLVED
@@ -185,6 +195,13 @@ public class ConversationService {
 
         upsertCase(conv, sop, result, outcome);
 
+        recordTimer("conversation.message.latency", hotelId, startedAt);
+        if ("RESOLVED".equals(result.status())) {
+            meterRegistry.counter("conversations.resolved", "hotel", hotelId).increment();
+        } else if ("ESCALATED".equals(result.status())) {
+            meterRegistry.counter("conversations.escalated", "hotel", hotelId).increment();
+        }
+
         return ConversationResponse.from(conv, sopDto, messagesOf(conv.getId()));
     }
 
@@ -223,6 +240,11 @@ public class ConversationService {
         }
         String translated = translationPort.translate(text, lang);
         return (translated == null || translated.isBlank()) ? text : translated;
+    }
+
+    private void recordTimer(String name, String hotelId, Instant startedAt) {
+        Duration elapsed = Duration.between(startedAt, Instant.now());
+        meterRegistry.timer(name, "hotel", hotelId).record(elapsed);
     }
 
     private SopResponse bestRetrieval(String hotelId, String problem) {
