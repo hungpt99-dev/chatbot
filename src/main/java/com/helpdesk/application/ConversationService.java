@@ -9,6 +9,7 @@ import com.helpdesk.domain.engine.ResponseComposer;
 import com.helpdesk.domain.engine.SopExecutionEngine;
 import com.helpdesk.domain.engine.StepOutcome;
 import com.helpdesk.domain.engine.StepResult;
+import com.helpdesk.domain.port.TranslationPort;
 import com.helpdesk.domain.model.AuditEvent;
 import com.helpdesk.domain.model.Conversation;
 import com.helpdesk.domain.model.ConversationMessage;
@@ -58,6 +59,7 @@ public class ConversationService {
     private final OfflineInterpreter interpreter;
     private final ResponseComposer composer;
     private final TicketPort ticketPort;
+    private final TranslationPort translationPort;
 
     public ConversationService(ConversationRepository conversationRepository,
                                ConversationMessageRepository messageRepository,
@@ -68,7 +70,8 @@ public class ConversationService {
                                LlmPort llmPort,
                                OfflineInterpreter interpreter,
                                ResponseComposer composer,
-                               TicketPort ticketPort) {
+                               TicketPort ticketPort,
+                               TranslationPort translationPort) {
         this.conversationRepository = conversationRepository;
         this.messageRepository = messageRepository;
         this.caseRepository = caseRepository;
@@ -79,6 +82,7 @@ public class ConversationService {
         this.interpreter = interpreter;
         this.composer = composer;
         this.ticketPort = ticketPort;
+        this.translationPort = translationPort;
     }
 
     @Transactional
@@ -102,7 +106,7 @@ public class ConversationService {
 
         appendMessage(saved, MessageRole.USER, MessageKind.PROBLEM, req.problem(), sop.getCode(), saved.getCurrentStepKey(), null, null);
         SopResponse.StepDto first = SopResponse.from(sop).steps().get(0);
-        String assistantText = composer.compose(new EngineResult(first, first.stepKey(), ConversationStatus.IN_PROGRESS.name(), List.of(), false), SopResponse.from(sop));
+        String assistantText = localize(composer.compose(new EngineResult(first, first.stepKey(), ConversationStatus.IN_PROGRESS.name(), List.of(), false), SopResponse.from(sop)), req.lang());
         appendMessage(saved, MessageRole.ASSISTANT, MessageKind.QUESTION, assistantText, sop.getCode(), first.stepKey(), "TROUBLESHOOT", null);
         auditRepository.save(new AuditEvent(hotelId, saved.getId(), sop.getCode(), first.stepKey(), "STEP_SHOWN", assistantText));
 
@@ -159,7 +163,7 @@ public class ConversationService {
 
         EngineResult result = engine.advance(sopDto, current, outcome);
 
-        String assistantText = composer.compose(result, sopDto);
+        String assistantText = localize(composer.compose(result, sopDto), req.lang());
         appendMessage(conv, MessageRole.ASSISTANT, kindFor(result), assistantText,
                 sop.getCode(), result.currentStepKey(), "TROUBLESHOOT", outcome.stepResult().name());
         auditRepository.save(new AuditEvent(hotelId, conv.getId(), sop.getCode(), conv.getCurrentStepKey(),
@@ -212,6 +216,14 @@ public class ConversationService {
     }
 
     // ---- internals ----
+
+    private String localize(String text, String lang) {
+        if (text == null || lang == null || lang.isBlank() || !translationPort.isConfigured()) {
+            return text;
+        }
+        String translated = translationPort.translate(text, lang);
+        return (translated == null || translated.isBlank()) ? text : translated;
+    }
 
     private SopResponse bestRetrieval(String hotelId, String problem) {
         var res = sopService.retrieve(hotelId, problem);
