@@ -3,6 +3,7 @@ package com.helpdesk.application;
 import com.helpdesk.domain.model.Sop;
 import com.helpdesk.domain.model.SopAssembler;
 import com.helpdesk.domain.repository.SopRepository;
+import com.helpdesk.domain.retrieval.LexicalOrVectorRetrievalStrategy;
 import com.helpdesk.domain.retrieval.LexicalSopRetriever;
 import com.helpdesk.domain.retrieval.RetrievalResult;
 import com.helpdesk.web.SopNotFoundException;
@@ -23,9 +24,9 @@ import java.util.Optional;
 public class SopService {
 
     private final SopRepository sopRepository;
-    private final LexicalSopRetriever retriever;
+    private final LexicalOrVectorRetrievalStrategy retriever;
 
-    public SopService(SopRepository sopRepository, LexicalSopRetriever retriever) {
+    public SopService(SopRepository sopRepository, LexicalOrVectorRetrievalStrategy retriever) {
         this.sopRepository = sopRepository;
         this.retriever = retriever;
     }

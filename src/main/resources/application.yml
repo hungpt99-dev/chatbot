@@ -21,6 +21,8 @@ spring:
 helpdesk:
   seed:
     enabled: true
+  retrieval:
+    mode: LEXICAL   # LEXICAL (default) | VECTOR | HYBRID. VECTOR/HYBRID use the stub VectorRetrieverAdapter until an embeddings backend is wired (RAG spike).
   llm:
     base-url: ${HELPDESK_LLM_BASE_URL:https://api.openai.com/v1}
     api-key: ${HELPDESK_LLM_API_KEY:}

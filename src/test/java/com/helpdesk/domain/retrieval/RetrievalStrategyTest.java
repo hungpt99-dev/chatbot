@@ -1,0 +1,77 @@
+package com.helpdesk.domain.retrieval;
+
+import com.helpdesk.domain.model.Sop;
+import com.helpdesk.domain.model.SopAssembler;
+import com.helpdesk.domain.repository.SopRepository;
+import com.helpdesk.web.dto.SopRequest;
+import com.helpdesk.web.dto.SopStepType;
+import com.helpdesk.web.dto.SopTerminalKind;
+import com.helpdesk.web.dto.StepRequest;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.annotation.DirtiesContext;
+
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+/**
+ * Phase 1F RAG spike: verifies the retrieval strategy switches backends by mode.
+ * LEXICAL returns candidates; VECTOR (stub) returns empty; HYBRID merges and
+ * degrades to lexical when the vector backend is a stub.
+ */
+@SpringBootTest
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
+class RetrievalStrategyTest {
+
+    private static final String HOTEL = "test-hotel";
+
+    @Autowired SopRepository sopRepository;
+    @Autowired LexicalSopRetriever lexical;
+    @Autowired VectorRetrieverAdapter vectorStub;
+
+    private void seed() {
+        SopRequest req = new SopRequest(
+                "strat-printer", "Printer", "desc", "IT", "máy in không in được",
+                List.of("máy in", "không in được"), List.of(), "e", "f", "esc",
+                List.of(new StepRequest("1", 1, "x", SopStepType.QUESTION, "2", false, null, List.of()),
+                        new StepRequest("2", 2, "done", SopStepType.ESCALATE, null, true, SopTerminalKind.ESCALATE, List.of())));
+        sopRepository.save(SopAssembler.toEntity(req, HOTEL));
+    }
+
+    @Test
+    void lexicalModeReturnsCandidates() {
+        seed();
+        LexicalOrVectorRetrievalStrategy s = new LexicalOrVectorRetrievalStrategy(lexical, vectorStub, "LEXICAL");
+        RetrievalResult r = s.retrieve(HOTEL, "Máy in không in được");
+        assertFalse(r.isEmpty());
+        assertEquals("strat-printer", r.candidates().get(0).getCode());
+    }
+
+    @Test
+    void vectorModeReturnsEmptyStub() {
+        seed();
+        LexicalOrVectorRetrievalStrategy s = new LexicalOrVectorRetrievalStrategy(lexical, vectorStub, "VECTOR");
+        RetrievalResult r = s.retrieve(HOTEL, "Máy in không in được");
+        assertTrue(r.isEmpty());
+    }
+
+    @Test
+    void hybridModeFallsBackToLexicalWhenVectorStubEmpty() {
+        seed();
+        LexicalOrVectorRetrievalStrategy s = new LexicalOrVectorRetrievalStrategy(lexical, vectorStub, "HYBRID");
+        RetrievalResult r = s.retrieve(HOTEL, "Máy in không in được");
+        // vector stub returns nothing, so hybrid degrades to the lexical result
+        assertFalse(r.isEmpty());
+        assertEquals("strat-printer", r.candidates().get(0).getCode());
+    }
+
+    @Test
+    void unknownModeDefaultsToLexical() {
+        seed();
+        LexicalOrVectorRetrievalStrategy s = new LexicalOrVectorRetrievalStrategy(lexical, vectorStub, "bogus");
+        RetrievalResult r = s.retrieve(HOTEL, "Máy in không in được");
+        assertFalse(r.isEmpty());
+    }
+}
