@@ -39,6 +39,7 @@ helpdesk:
       is resolved, return intent RESOLVE. If it cannot be resolved by the SOP,
       return intent ESCALATE with a reason. Keep replies concise and in the
       employee's language.
+
   ticket:
     endpoint: ${HELPDESK_TICKET_ENDPOINT:}   # full URL to POST escalated cases; blank => internal-only (no-op degrade)
   translation:
@@ -54,6 +55,44 @@ management:
   endpoint:
     health:
       show-details: always
+
+  security:
+    # Master switch for SSO / RBAC (BRD §7). OFF by default so the app stays open
+    # for local dev, offline runs, and the existing unauthenticated test suite.
+    # Flip to true (or set HELPDESK_SECURITY_ENABLED=true) to enforce OIDC login
+    # on /api/** (except /api/health) and role checks on the admin endpoints.
+    enabled: ${HELPDESK_SECURITY_ENABLED:false}
+    # OIDC / SSO settings — consumed by SecurityConfig to build Spring Security's
+    # OAuth2 client (oauth2Login). Inert unless helpdesk.security.enabled=true.
+    # Inject real values via env vars; never commit secrets.
+    oidc:
+      registration-id: helpdesk
+      client-id: ${HELPDESK_OIDC_CLIENT_ID:change-me}
+      client-secret: ${HELPDESK_OIDC_CLIENT_SECRET:change-me}
+      scope: openid,profile,email
+      authorization-uri: ${HELPDESK_OIDC_AUTH_URI:https://idp.example.com/oauth2/authorize}
+      token-uri: ${HELPDESK_OIDC_TOKEN_URI:https://idp.example.com/oauth2/token}
+      jwk-set-uri: ${HELPDESK_OIDC_JWK_URI:https://idp.example.com/oauth2/jwks}
+      user-info-uri: ${HELPDESK_OIDC_USERINFO_URI:https://idp.example.com/oauth2/userinfo}
+      user-name-attribute: sub
+      redirect-uri: ${HELPDESK_OIDC_REDIRECT_URI:{baseUrl}/login/oauth2/code/{registrationId}}
+      # OIDC claim carrying the user's roles (e.g. Keycloak "groups", Auth0 "roles").
+      roles-claim: groups
+
+# HTTPS / TLS readiness (BRD §7). Enable in production: terminate TLS here or at
+# a reverse proxy, then set the session cookie `secure` and send HSTS.
+# server:
+#   port: 8443
+#   ssl:
+#     enabled: true
+#     key-store: classpath:keystore.p12
+#     key-store-type: PKCS12
+#     key-store-password: ${SSL_KEYSTORE_PASSWORD}
+#     key-alias: helpdesk
+#   servlet:
+#     session:
+#       cookie:
+#         secure: true
 
 server:
   port: 8080

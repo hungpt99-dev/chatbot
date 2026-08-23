@@ -11,6 +11,7 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -28,11 +29,13 @@ public class ConversationController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasRole('EMPLOYEE') or hasRole('IT_ADMIN')")
     public ConversationResponse create(@Valid @RequestBody ConversationRequest req) {
         return conversationService.create(req);
     }
 
     @PostMapping(value = "/{id}/messages", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasRole('EMPLOYEE') or hasRole('IT_ADMIN')")
     public ConversationResponse sendMessage(@PathVariable Long id,
                                              @Valid @RequestBody MessageRequest req) {
         return conversationService.sendMessage(id, req);
