@@ -35,6 +35,10 @@ helpdesk:
       is resolved, return intent RESOLVE. If it cannot be resolved by the SOP,
       return intent ESCALATE with a reason. Keep replies concise and in the
       employee's language.
+  translation:
+    base-url: ${HELPDESK_TRANSLATION_BASE_URL:}
+    api-key: ${HELPDESK_TRANSLATION_API_KEY:}
+    model: ${HELPDESK_TRANSLATION_MODEL:}
 
 server:
   port: 8080
