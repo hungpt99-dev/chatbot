@@ -23,6 +23,9 @@ public class Hotel {
     @Column(name = "location", length = 256)
     private String location;
 
+    @Column(name = "region", length = 256)
+    private String region;
+
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 
@@ -40,6 +43,8 @@ public class Hotel {
     public void setName(String name) { this.name = name; }
     public String getLocation() { return location; }
     public void setLocation(String location) { this.location = location; }
+    public String getRegion() { return region; }
+    public void setRegion(String region) { this.region = region; }
     public Instant getCreatedAt() { return createdAt; }
     public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
 }

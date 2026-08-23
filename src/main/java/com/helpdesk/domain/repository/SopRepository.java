@@ -17,4 +17,6 @@ public interface SopRepository extends JpaRepository<Sop, String> {
     Optional<Sop> findByHotelIdAndCode(String hotelId, String code);
 
     boolean existsByHotelIdAndCode(String hotelId, String code);
+
+    long countByHotelId(String hotelId);
 }
